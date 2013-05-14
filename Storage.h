@@ -8,7 +8,7 @@
 #ifndef STORAGE_H
 #define	STORAGE_H
 
-#define MAX_DRIVERS 1 // must be 1 to 4
+#define MAX_DRIVERS 2 // must be 1 to 4
 
 /*
  * Notes:

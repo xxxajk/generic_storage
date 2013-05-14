@@ -44,12 +44,15 @@ int PCPartition::Init(storage_t *sto) {
                         // Problem... partition seg and MBR sig are identical?!
                         // look for 46  41  54 (FAT) @ 0x36
                         if (buf[0x36] == 0x46 && buf[0x37] == 0x41 && buf[0x38] == 0x54) st = -1;
+                        if(!st && buf[0x52] == 0x46 && buf[0x53] == 0x41 && buf[0x54] == 0x54) st = -1;
                         //part = (part_t *)malloc(sizeof (part_t) * 4);
-                        for (int i = 0; i < 4; i++) {
-                                //memcpy(&(part[i]), &(MBR->part[i]), sizeof (part_t));
-                                part[i]=MBR->part[i]; // Wow! This acts like memcpy?!
-                                if (part[i].type != 0x00) {
-                                        if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
+                        if (!st) {
+                                for (int i = 0; i < 4; i++) {
+                                        //memcpy(&(part[i]), &(MBR->part[i]), sizeof (part_t));
+                                        part[i] = MBR->part[i]; // Wow! This acts like memcpy?!
+                                        if (part[i].type != 0x00) {
+                                                if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
+                                        }
                                 }
                         }
                 }
