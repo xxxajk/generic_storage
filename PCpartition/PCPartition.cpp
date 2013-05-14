@@ -23,15 +23,15 @@
 #include <Storage.h>
 
 PCPartition::PCPartition() {
-
 }
 
 /* Identify partition types, if any. If no partition exists, default to super mode. */
 int PCPartition::Init(storage_t *sto) {
         //printf("Sector size = %i\r\n", sto->SectorSize);
         //uint8_t mybuf[sto->SectorSize *2];
-        uint8_t *buf;
-        buf = (uint8_t *)malloc(sto->SectorSize);
+        // WARNING, CAN FAIL!
+        uint8_t buf[sto->SectorSize];
+        //buf = (uint8_t *)malloc(sto->SectorSize);
         st = (int)((sto->Read)(0, buf, sto));
         if (!st) {
                 mbr_t *MBR = (mbr_t *)buf;
@@ -44,16 +44,17 @@ int PCPartition::Init(storage_t *sto) {
                         // Problem... partition seg and MBR sig are identical?!
                         // look for 46  41  54 (FAT) @ 0x36
                         if (buf[0x36] == 0x46 && buf[0x37] == 0x41 && buf[0x38] == 0x54) st = -1;
-                        part = (part_t *)malloc(sizeof (part_t) * 4);
+                        //part = (part_t *)malloc(sizeof (part_t) * 4);
                         for (int i = 0; i < 4; i++) {
-                                memcpy(&(part[i]), &(MBR->part[i]), sizeof (part_t));
-                                if(part[i].type != 0x00) {
+                                //memcpy(&(part[i]), &(MBR->part[i]), sizeof (part_t));
+                                part[i]=MBR->part[i]; // Wow! This acts like memcpy?!
+                                if (part[i].type != 0x00) {
                                         if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
                                 }
                         }
                 }
         }
-        free(buf);
+        //free(buf);
         return st;
 }
 
@@ -63,7 +64,8 @@ part_t * PCPartition::GetPart(int number) {
 }
 
 PCPartition::~PCPartition() {
-        if (part != NULL) {
-                free(part);
-        }
+        //        if (part != NULL) {
+        //                free(part);
+        //                part = NULL;
+        //        }
 }

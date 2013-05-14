@@ -55,8 +55,8 @@ int PFAT::Init(storage_t *sto, uint8_t lv) {
 
 /* Identify the FAT type. */
 int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
-        uint8_t *buf;
-        buf = (uint8_t *)malloc(sto->SectorSize);
+        uint8_t buf[sto->SectorSize];
+        //buf = (uint8_t *)malloc(sto->SectorSize);
         st = (int)((sto->Read)(first, buf, sto));
         if (!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
@@ -96,7 +96,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                         }
                 }
         }
-        free(buf);
+        //free(buf);
 
         return st;
 }

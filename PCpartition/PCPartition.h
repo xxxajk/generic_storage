@@ -130,7 +130,6 @@ struct masterBootRecord {
 typedef struct masterBootRecord mbr_t;
 
 class PCPartition {
-        part_t *part;
 public:
         // Array of partitions.
         PCPartition();
@@ -142,7 +141,7 @@ public:
 private:
         // ZERO if all went well.
         int st;
-
+        part_t part[4];
 };
 
 #endif	/* PARTITION_H */
