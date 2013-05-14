@@ -40,6 +40,7 @@ struct Storage {
         int (*Write)(uint32_t, uint8_t *, struct Storage *); // single sector write
         int (*Reads)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector read
         int (*Writes)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector write
+        bool (*Status)(struct Storage *);
         uint16_t SectorSize; // physical or translated size on the physical media
         uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
         void *private_data; // Anything you need, or nothing at all.
@@ -79,6 +80,11 @@ typedef struct Pvt {
 } pvt_t;
 pvt_t info[MAX_PARTS];
 
+bool PStatus(storage_t *sto) {
+        return (Bulk[((pvt_t *) sto->private_data)->B]->WriteProtected(((pvt_t *) sto->private_data)->lun));
+        //return 0;
+}
+
 int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto) {
         uint8_t x = 0;
         int tries = REDO;
@@ -114,6 +120,7 @@ int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto) {
         while(tries) {
                 tries--;
                 x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, 1, buf));
+                if(x == MASS_ERR_WRITE_PROTECTED) break;
                 if(UsbDEBUGlvl > 0x64) {
                         if(x) {
                                 printf("ERROR 0x%02x\r\n", x);
@@ -129,9 +136,9 @@ int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto) {
 int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
         //uint8_t sb[64];
         //printf("PReads LBA=%8.8X, count=%i size=%i\r\n", LBA, count, (sto->SectorSize));
-        for(uint16_t t=0; t<(sto->SectorSize * count); t++) {
-                buf[t] = 0x11;
-        }
+        //for(uint16_t t=0; t<(sto->SectorSize * count); t++) {
+        //        buf[t] = 0x11;
+        //}
         uint8_t x = 0;
         int tries = REDO;
         while(tries) {
@@ -167,6 +174,7 @@ int PWrites(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
         while(tries) {
                 tries--;
                 x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, count, buf));
+                if(x == MASS_ERR_WRITE_PROTECTED) break;
                 if(UsbDEBUGlvl > 0x64) {
                         if(x) {
                                 printf("ERROR 0x%02x\r\n", x);

@@ -15,6 +15,7 @@
  * along with this Library.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -114,17 +115,21 @@ DSTATUS PFAT::disk_initialize(BYTE pdrv) {
 }
 
 DSTATUS PFAT::disk_status(BYTE pdrv) {
-        return 0; // TO-DO: write protect status.
+        bool rc = storage->Status(storage);
+        if(rc) return RES_OK;
+        return RES_WRPRT;
 }
 
 DRESULT PFAT::disk_read(BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
-
-        storage->Reads(sector, (uint8_t*)buff, storage, count);
+        int rc =  storage->Reads(sector, (uint8_t*)buff, storage, count);
+        if(rc == 0) return RES_OK;
+        return RES_ERROR;
 }
 
 DRESULT PFAT::disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
-
-        storage->Writes(sector, (uint8_t*)buff, storage, count);
+        int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
+        if(rc == 0) return RES_OK;
+        return RES_ERROR;
 }
 
 DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
