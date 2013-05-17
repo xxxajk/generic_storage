@@ -111,7 +111,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
     get_fattime - Get current time
  */
 DSTATUS PFAT::disk_initialize(BYTE pdrv) {
-        return 0;
+        return disk_status(pdrv);
 }
 
 DSTATUS PFAT::disk_status(BYTE pdrv) {
@@ -141,8 +141,8 @@ DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
                         break;
                 case GET_BLOCK_SIZE:
                         *(DWORD*)buff = storage->SectorSize;
-
                         break;
+                //case CTRL_ERASE_SECTOR:
                 default:
                         return RES_PARERR;
         }

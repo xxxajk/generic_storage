@@ -47,10 +47,13 @@
  */
 
 
-#define	_USE_MKFS	0	/* 0:Disable or 1:Enable */
+#define	_USE_MKFS	1	/* 0:Disable or 1:Enable */
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
-
+/*
+ * Trips gcc 4.3.2 bug
+ * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=18251
+ */
 #define	_USE_FASTSEEK	0	/* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 
@@ -120,7 +123,7 @@
 /  enable LFN feature and set _LFN_UNICODE to 1. */
 
 
-#define _FS_RPATH		0	/* 0 to 2 */
+#define _FS_RPATH	2	/* 0 to 2 */
 /* The _FS_RPATH option configures relative path feature.
 /
 /   0: Disable relative path feature and remove related functions.
@@ -134,7 +137,7 @@
 / Physical Drive Configurations
 /----------------------------------------------------------------------------*/
 
-#define _VOLUMES	16
+#define _VOLUMES	8
 /* Number of volumes (logical drives) to be used. */
 
 
@@ -161,8 +164,27 @@
 /*---------------------------------------------------------------------------/
 / System Configurations
 /----------------------------------------------------------------------------*/
+#if defined(AVR)
+#include <avr/io.h>
+#include <avr/pgmspace.h>
+#define _TABLES_IN_PGMSPACE 1
+#else
+#define _TABLES_IN_PGMSPACE 0
+#endif
 
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN
+#define _WORD_ACCESS	1	/* 0 or 1 */
+#endif
+
+/* on most arduino, it's LE, 'cept a few... */
+#ifndef _WORD_ACCESS
+#if defined(AVR)
+#define _WORD_ACCESS	1	/* 0 or 1 */
+#else
 #define _WORD_ACCESS	0	/* 0 or 1 */
+#endif
+#endif
+
 /* Set 0 first and it is always compatible with all platforms. The _WORD_ACCESS
 /  option defines which access method is used to the word data on the FAT volume.
 /
@@ -179,7 +201,7 @@
 /* A header file that defines sync object types on the O/S, such as
 /  windows.h, ucos_ii.h and semphr.h, must be included prior to ff.h. */
 
-#define _FS_REENTRANT	0		/* 0:Disable or 1:Enable */
+#define _FS_REENTRANT           0	/* 0:Disable or 1:Enable */
 #define _FS_TIMEOUT		1000	/* Timeout period in unit of time ticks */
 #define	_SYNC_t			HANDLE	/* O/S dependent type of sync object. e.g. HANDLE, OS_EVENT*, ID and etc.. */
 

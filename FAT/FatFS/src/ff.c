@@ -2912,7 +2912,8 @@ FRESULT f_lseek(
 
                 if(ofs == CREATE_LINKMAP) { /* Create CLMT */
                         tbl = fp->cltbl;
-                        tlen = *tbl++;
+                        tlen = *tbl;
+                        tbl++;
                         ulen = 2; /* Given table size and required table size */
                         cl = fp->sclust; /* Top of the chain */
                         if(cl) {
