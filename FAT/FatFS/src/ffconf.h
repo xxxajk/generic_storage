@@ -13,15 +13,40 @@
 #define _USB_ 1
 
 
+#define	_FS_LOCK	1	/* 0:Disable or >=1:Enable */
+/* To enable file lock control feature, set _FS_LOCK to 1 or greater.
+   The value defines how many files can be opened simultaneously. */
+
+
 /*---------------------------------------------------------------------------/
 / Functions and Buffer Configurations
 /----------------------------------------------------------------------------*/
 
-#define	_FS_TINY	0	/* 0:Normal or 1:Tiny */
+#define	_FS_TINY	1	/* 0:Normal or 1:Tiny */
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
 /  object instead of the sector buffer in the individual file object for file
-/  data transfer. This reduces memory consumption 512 bytes each file object. */
+/  data transfer. This reduces memory consumption 512 bytes each file object.
+/
+/  Note: FIX-ME: Setting of 1 is some how incompatible with LFN --xxajk
+/
+*/
 
+
+#define	_USE_LFN        0		/* 0 to 3 */
+#define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
+/* The _USE_LFN option switches the LFN support.
+/
+/   0: Disable LFN feature. _MAX_LFN and _LFN_UNICODE have no effect.
+/   1: Enable LFN with static working buffer on the BSS. Always NOT reentrant.
+/   2: Enable LFN with dynamic working buffer on the STACK.
+/   3: Enable LFN with dynamic working buffer on the HEAP.
+/
+/  >>>>>>>>>>>>> Note: 1 and 2 do not work for me, 0 and 3 do :-) --xxajk
+/
+/  The LFN working buffer occupies (_MAX_LFN + 1) * 2 bytes. To enable LFN,
+/  Unicode handling functions ff_convert() and ff_wtoupper() must be added
+/  to the project. When enable to use heap, memory control functions
+/  ff_memalloc() and ff_memfree() must be added to the project. */
 
 #define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
@@ -103,21 +128,6 @@
  */
 
 
-#define	_USE_LFN        3		/* 0 to 3 */
-#define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
-/* The _USE_LFN option switches the LFN support.
-/
-/   0: Disable LFN feature. _MAX_LFN and _LFN_UNICODE have no effect.
-/   1: Enable LFN with static working buffer on the BSS. Always NOT reentrant.
-/   2: Enable LFN with dynamic working buffer on the STACK.
-/   3: Enable LFN with dynamic working buffer on the HEAP.
-/
-/  The LFN working buffer occupies (_MAX_LFN + 1) * 2 bytes. To enable LFN,
-/  Unicode handling functions ff_convert() and ff_wtoupper() must be added
-/  to the project. When enable to use heap, memory control functions
-/  ff_memalloc() and ff_memfree() must be added to the project. */
-
-
 #define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode (UTF-8) */
 /* To switch the character code set on FatFs API to Unicode,
 /  enable LFN feature and set _LFN_UNICODE to 1. */
@@ -137,7 +147,7 @@
 / Physical Drive Configurations
 /----------------------------------------------------------------------------*/
 
-#define _VOLUMES	8
+#define _VOLUMES	1
 /* Number of volumes (logical drives) to be used. */
 
 
@@ -168,8 +178,15 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #define _TABLES_IN_PGMSPACE 1
+#define GWSTR(X) pgm_read_word_near(&X)
+#define GSTR(X) pgm_read_byte_near(&X)
 #else
 #define _TABLES_IN_PGMSPACE 0
+#define GSTR
+#define GWSTR
+#define PROGMEM
+#define memcpy_P mem_cpy
+#define PSTR(X) X
 #endif
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN
@@ -211,11 +228,6 @@
 /   1: Enable reentrancy. Also user provided synchronization handlers,
 /      ff_req_grant, ff_rel_grant, ff_del_syncobj and ff_cre_syncobj
 /      function must be added to the project. */
-
-
-#define	_FS_LOCK	3	/* 0:Disable or >=1:Enable */
-/* To enable file lock control feature, set _FS_LOCK to 1 or greater.
-   The value defines how many files can be opened simultaneously. */
 
 
 #endif /* _FFCONFIG */

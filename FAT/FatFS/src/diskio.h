@@ -5,15 +5,15 @@
 #ifndef _DISKIO_DEFINED
 #define _DISKIO_DEFINED
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define _USE_WRITE	1	/* 1: Enable disk_write function */
 #define _USE_IOCTL	1	/* 1: Enable disk_ioctl fucntion */
 
 #include <FAT/FatFS/src/integer.h>
 #include <FAT/FatFS/src/ffconf.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
         /* Status of Disk Functions */
         typedef BYTE DSTATUS;

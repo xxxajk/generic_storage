@@ -100,6 +100,25 @@
 #include "diskio.h"		/* Declarations of low level disk I/O functions */
 
 
+extern void *__brkval;
+
+unsigned int getHeapend() {
+        extern unsigned int __heap_start;
+
+        if ((unsigned int)__brkval == 0) {
+                return (unsigned int)&__heap_start;
+        } else {
+                return (unsigned int)__brkval;
+        }
+}
+unsigned int freeHeap() {
+        if (SP < (unsigned int)__malloc_heap_start) {
+                return ((unsigned int)__malloc_heap_end - getHeapend());
+        } else {
+                return (SP - getHeapend());
+        }
+}
+
 /*--------------------------------------------------------------------------
 
    Module Private Definitions
@@ -129,7 +148,9 @@
 #define	ENTER_FF(fs)		{ if (!lock_fs(fs)) return FR_TIMEOUT; }
 #define	LEAVE_FF(fs, res)	{ unlock_fs(fs, res); return res; }
 #else
+
 #define	ENTER_FF(fs)
+
 #define LEAVE_FF(fs, res)	return res
 #endif
 
@@ -487,7 +508,7 @@ FILESEM Files[_FS_LOCK]; /* File lock semaphores */
 
 #if _USE_LFN == 0			/* No LFN feature */
 #define	DEF_NAMEBUF			BYTE sfn[12]
-#define INIT_BUF(dobj)		(dobj).fn = sfn
+#define INIT_BUF(dobj)		{ (dobj).fn = sfn; }
 #define	FREE_BUF()
 
 #elif _USE_LFN == 1			/* LFN feature with static working buffer */
@@ -514,8 +535,7 @@ static WCHAR LfnBuf[_MAX_LFN + 1];
 
 
 #ifdef _EXCVT
-static
-const BYTE ExCvt[] = _EXCVT; /* Upper conversion table for extended chars */
+static const BYTE ExCvt[] PROGMEM = _EXCVT; /* Upper conversion table for extended chars */
 #endif
 
 /*--------------------------------------------------------------------------
@@ -567,10 +587,34 @@ int mem_cmp(const void* dst, const void* src, UINT cnt) {
 }
 
 /* Check if chr is contained in the string */
-static
-int chk_chr(const char* str, int chr) {
-        while(*str && *str != chr) str++;
-        return *str;
+static int chk_chr(
+#if _TABLES_IN_PGMSPACE
+PGM_P
+#else
+const char*
+#endif
+str , int chr
+) {
+        while(
+#if _TABLES_IN_PGMSPACE
+                pgm_read_byte_near(str)
+#else
+                *str
+#endif
+                &&
+#if _TABLES_IN_PGMSPACE
+                pgm_read_byte_near(str)
+#else
+                *str
+#endif
+                != chr) str++;
+        return
+#if _TABLES_IN_PGMSPACE
+                pgm_read_byte_near(str)
+#else
+                *str
+#endif
+                ;
 }
 
 
@@ -1213,6 +1257,7 @@ FRESULT dir_alloc(
                         res = dir_next(dj, 1); /* Next entry with table stretch enabled */
                 } while(res == FR_OK);
         }
+        if (res == FR_NO_FILE) res = FR_DENIED; // Official patch, 15 March 2013
         return res;
 }
 #endif
@@ -1712,7 +1757,7 @@ FRESULT create_name(
                 w = ff_convert(w, 1); /* Convert ANSI/OEM to Unicode */
                 if(!w) return FR_INVALID_NAME; /* Reject invalid code */
 #endif
-                if(w < 0x80 && chk_chr("\"*:<>\?|\x7F", w)) /* Reject illegal chars for LFN */
+                if(w < 0x80 && chk_chr(PSTR("\"*:<>\?|\x7F"), w)) /* Reject illegal chars for LFN */
                         return FR_INVALID_NAME;
                 lfn[di++] = w; /* Store the Unicode char */
         }
@@ -1770,7 +1815,8 @@ FRESULT create_name(
                 if(w >= 0x80) { /* Non ASCII char */
 #ifdef _EXCVT
                         w = ff_convert(w, 0); /* Unicode -> OEM code */
-                        if(w) w = ExCvt[w - 0x80]; /* Convert extended char to upper (SBCS) */
+
+                        if(w) w = GSTR(ExCvt[w - 0x80]); /* Convert extended char to upper (SBCS) */
 #else
                         w = ff_convert(ff_wtoupper(w), 0); /* Upper converted Unicode -> OEM code */
 #endif
@@ -1785,7 +1831,7 @@ FRESULT create_name(
                         }
                         dj->fn[i++] = (BYTE) (w >> 8);
                 } else { /* Single byte char */
-                        if(!w || chk_chr("+,;=[]", w)) { /* Replace illegal chars for SFN */
+                        if(!w || chk_chr(PSTR("+,;=[]"), w)) { /* Replace illegal chars for SFN */
                                 w = '_';
                                 cf |= NS_LOSS | NS_LFN; /* Lossy conversion */
                         } else {
@@ -1854,7 +1900,7 @@ FRESULT create_name(
                 if(c >= 0x80) { /* Extended char? */
                         b |= 3; /* Eliminate NT flag */
 #ifdef _EXCVT
-                        c = ExCvt[c - 0x80]; /* To upper extended chars (SBCS cfg) */
+                        c = GSTR(ExCvt[c - 0x80]); /* To upper extended chars (SBCS cfg) */
 #else
 #if !_DF1S
                         return FR_INVALID_NAME; /* Reject extended chars (ASCII cfg) */
@@ -1868,7 +1914,7 @@ FRESULT create_name(
                         sfn[i++] = c;
                         sfn[i++] = d;
                 } else { /* Single byte code */
-                        if(chk_chr("\"*+,:;<=>\?[]|\x7F", c)) /* Reject illegal chrs for SFN */
+                        if(chk_chr(PSTR("\"*+,:;<=>\?[]|\x7F"), c)) /* Reject illegal chrs for SFN */
                                 return FR_INVALID_NAME;
                         if(IsUpper(c)) { /* ASCII large capital? */
                                 b |= 2;
@@ -3711,13 +3757,13 @@ FRESULT f_setlabel(
 #else
                         if(IsLower(w)) w -= 0x20; /* To upper ASCII chars */
 #ifdef _EXCVT
-                        if(w >= 0x80) w = ExCvt[w - 0x80]; /* To upper extended chars (SBCS cfg) */
+                        if(w >= 0x80) w = GSTR(ExCvt[w - 0x80]); /* To upper extended chars (SBCS cfg) */
 #else
                         if(!_DF1S && w >= 0x80) w = 0; /* Reject extended chars (ASCII cfg) */
 #endif
 #endif
 #endif
-                        if(!w || chk_chr("\"*+,.:;<=>\?[]|\x7F", w) || j >= (UINT) ((w >= 0x100) ? 10 : 11)) /* Reject invalid chars for volume label */
+                        if(!w || chk_chr(PSTR("\"*+,.:;<=>\?[]|\x7F"), w) || j >= (UINT) ((w >= 0x100) ? 10 : 11)) /* Reject invalid chars for volume label */
                                 LEAVE_FF(dj.fs, FR_INVALID_NAME);
                         if(w >= 0x100) vn[j++] = (BYTE) (w >> 8);
                         vn[j++] = (BYTE) w;
@@ -3973,7 +4019,7 @@ FRESULT f_mkfs(
         /* Create BPB in the VBR */
         tbl = fs->win; /* Clear sector */
         mem_set(tbl, 0, SS(fs));
-        mem_cpy(tbl, "\xEB\xFE\x90" "MSDOS5.0", 11); /* Boot jump code, OEM name */
+        memcpy_P(tbl, PSTR("\xEB\xFE\x90" "MSDOS5.0"), 11); /* Boot jump code, OEM name */
         i = SS(fs); /* Sector size */
         ST_WORD(tbl + BPB_BytsPerSec, i);
         tbl[BPB_SecPerClus] = (BYTE) au; /* Sectors per cluster */
@@ -3999,13 +4045,13 @@ FRESULT f_mkfs(
                 ST_WORD(tbl + BPB_BkBootSec, 6); /* Backup boot record offset (VBR+6) */
                 tbl[BS_DrvNum32] = 0x80; /* Drive number */
                 tbl[BS_BootSig32] = 0x29; /* Extended boot signature */
-                mem_cpy(tbl + BS_VolLab32, "NO NAME    " "FAT32   ", 19); /* Volume label, FAT signature */
+                memcpy_P(tbl + BS_VolLab32, PSTR("NO NAME    " "FAT32   "), 19); /* Volume label, FAT signature */
         } else {
                 ST_DWORD(tbl + BS_VolID, n); /* VSN */
                 ST_WORD(tbl + BPB_FATSz16, n_fat); /* Number of sectors per FAT */
                 tbl[BS_DrvNum] = 0x80; /* Drive number */
                 tbl[BS_BootSig] = 0x29; /* Extended boot signature */
-                mem_cpy(tbl + BS_VolLab, "NO NAME    " "FAT     ", 19); /* Volume label, FAT signature */
+                memcpy_P(tbl + BS_VolLab, PSTR("NO NAME    " "FAT     "), 19); /* Volume label, FAT signature */
         }
         ST_WORD(tbl + BS_55AA, 0xAA55); /* Signature (Offset is fixed here regardless of sector size) */
         if(DISK_WRITE(pdrv, tbl, b_vol, 1) != RES_OK) /* Write it to the VBR sector */
