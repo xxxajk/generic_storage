@@ -22,7 +22,9 @@
 / Functions and Buffer Configurations
 /----------------------------------------------------------------------------*/
 
+#ifndef _FS_TINY
 #define	_FS_TINY	1	/* 0:Normal or 1:Tiny */
+#endif
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
 /  object instead of the sector buffer in the individual file object for file
 /  data transfer. This reduces memory consumption 512 bytes each file object.
@@ -31,8 +33,9 @@
 /
 */
 
-
+#ifndef _USE_LFN
 #define	_USE_LFN        0		/* 0 to 3 */
+#endif
 #define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
 /* The _USE_LFN option switches the LFN support.
 /
