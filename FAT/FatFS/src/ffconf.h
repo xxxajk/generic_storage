@@ -12,11 +12,11 @@
 /* Use usb callbacks from c++ */
 #define _USB_ 1
 
-
+#ifndef _FS_LOCK
 #define	_FS_LOCK	1	/* 0:Disable or >=1:Enable */
 /* To enable file lock control feature, set _FS_LOCK to 1 or greater.
    The value defines how many files can be opened simultaneously. */
-
+#endif
 
 /*---------------------------------------------------------------------------/
 / Functions and Buffer Configurations
