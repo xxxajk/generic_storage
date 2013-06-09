@@ -149,10 +149,10 @@
 /*---------------------------------------------------------------------------/
 / Physical Drive Configurations
 /----------------------------------------------------------------------------*/
-
+#ifndef _VOLUMES
 #define _VOLUMES	1
 /* Number of volumes (logical drives) to be used. */
-
+#endif
 
 #define	_MAX_SS		512		/* 512, 1024, 2048 or 4096 */
 /* Maximum sector size to be handled.

@@ -803,7 +803,7 @@ FRESULT move_window(
 
 
 /*-----------------------------------------------------------------------*/
-/* Synchronize file system and strage device                             */
+/* Synchronize file system and storage device                             */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY
 
@@ -2326,7 +2326,13 @@ FRESULT validate(/* FR_OK(0): The object is valid, !=0: Invalid */
 
 --------------------------------------------------------------------------*/
 
-
+/* Get next available logical drive number, returns 10 for unavailable  */
+BYTE f_next_mount(void) {
+        for(int i = 0; i< _VOLUMES; i++) {
+                if(!(FatFs[i])) return i;
+        }
+        return 10;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Mount/Unmount a Logical Drive                                         */

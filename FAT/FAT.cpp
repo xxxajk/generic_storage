@@ -62,6 +62,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
         TCHAR lb[256];
         lb[0] = 0x00;
         int i = 0;
+        if(lv > _VOLUMES) return FR_INVALID_DRIVE;
         //buf = (uint8_t *)malloc(sto->SectorSize);
         st = (int)((sto->Read)(first, buf, sto));
         if (!st) {
@@ -103,6 +104,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                                         // Life would be a whole lot easier if everything was just UTF-8!
                                 }
                         } else {
+                                f_mount(volmap, NULL);
                                 printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
                         }
                 }
@@ -219,7 +221,6 @@ PFAT::~PFAT() {
         }
 
         if(label != NULL) {
-                //free(label);
                 delete label;
                 label = NULL;
         }
