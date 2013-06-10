@@ -53,11 +53,11 @@ PFAT::PFAT() {
 
 int PFAT::Init(storage_t *sto, uint8_t lv) {
         Init(sto, lv, (uint32_t)0);
-        label = NULL;
 }
 
 /* Identify the FAT type. */
 int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
+        label = NULL;
         uint8_t buf[sto->SectorSize];
         TCHAR lb[256];
         lb[0] = 0x00;
