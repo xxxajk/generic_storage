@@ -2334,6 +2334,14 @@ BYTE f_next_mount(void) {
         return 10;
 }
 
+
+FRESULT f_stat_mount(BYTE vol) {
+        if(vol >= _VOLUMES) /* Check if the drive number is valid */
+                return FR_INVALID_DRIVE;
+        if(FatFs[vol]) return FR_OK;
+        return FR_NOT_ENABLED;
+}
+
 /*-----------------------------------------------------------------------*/
 /* Mount/Unmount a Logical Drive                                         */
 

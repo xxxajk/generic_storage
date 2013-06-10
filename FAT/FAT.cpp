@@ -62,14 +62,14 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
         TCHAR lb[256];
         lb[0] = 0x00;
         int i = 0;
-        if(lv > _VOLUMES) return FR_INVALID_DRIVE;
+        if (lv > _VOLUMES) return FR_INVALID_DRIVE;
         //buf = (uint8_t *)malloc(sto->SectorSize);
         st = (int)((sto->Read)(first, buf, sto));
         if (!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
                 // verify that the sig is OK.
                 if (BR->bootSectorSig0 != 0x55 || BR->bootSectorSig1 != 0xAA) {
-                        printf_P(PSTR("Bad sig? %02x %02x\r\n"), BR->bootSectorSig0, BR->bootSectorSig1);
+                        //printf_P(PSTR("Bad sig? %02x %02x\r\n"), BR->bootSectorSig0, BR->bootSectorSig1);
                         st = -1;
                 } else {
                         Offset = first;
@@ -79,33 +79,34 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                         volmap = lv;
                         st = f_mount(volmap, ffs);
                         if (!st) {
-                                if(label != NULL) {
+                                if (label != NULL) {
                                         delete label;
                                         label = NULL;
                                 }
                                 TCHAR path[4];
-                                path[0] = '0'+lv;
-                                path[1]=':';
-                                path[2]='/';
-                                path[3]=0x00;
+                                path[0] = '0' + lv;
+                                path[1] = ':';
+                                path[2] = '/';
+                                path[3] = 0x00;
                                 DWORD sn;
                                 int t = f_getlabel(&path[0], &lb[0], &sn);
-                                if(t) {
-                                        printf_P(PSTR("NO LABEL\r\n"));
-                                label = (uint8_t *)(operator new[] (1));
-                                        label[0] = 0x00;
+                                if (t) {
+                                        label = (uint8_t *)(operator new[] (2));
+                                        label[0] = '/';
+                                        label[1] = 0x00;
                                 } else {
-                                        label = (uint8_t *)(operator new[] (1+strlen(&lb[0])));
-                                        for(i=0 ; lb[i]!=0x00; i++)
-                                                label[i] = lb[i];
-                                        label[i] = lb[i];
-                                        printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
-                                        // We will need to convert 'wide' chars, etc-- yuck!
+                                        label = (uint8_t *)(operator new[] (2 + strlen(&lb[0])));
+                                        label[0] = '/';
+                                        for (i = 0; lb[i] != 0x00; i++)
+                                                label[i + 1] = lb[i];
+                                        label[i + 1] = lb[i];
+                                        // We will need to convert 'wide' chars, etc? yuck!
                                         // Life would be a whole lot easier if everything was just UTF-8!
                                 }
+                                //printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
                         } else {
                                 f_mount(volmap, NULL);
-                                printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
+                                //printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
                         }
                 }
         }
@@ -128,19 +129,19 @@ DSTATUS PFAT::disk_initialize(BYTE pdrv) {
 
 DSTATUS PFAT::disk_status(BYTE pdrv) {
         bool rc = storage->Status(storage);
-        if(rc) return RES_OK;
+        if (rc) return RES_OK;
         return RES_WRPRT;
 }
 
 DRESULT PFAT::disk_read(BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
-        int rc =  storage->Reads(sector, (uint8_t*)buff, storage, count);
-        if(rc == 0) return RES_OK;
+        int rc = storage->Reads(sector, (uint8_t*)buff, storage, count);
+        if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
 DRESULT PFAT::disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
         int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
-        if(rc == 0) return RES_OK;
+        if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
@@ -154,7 +155,7 @@ DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
                 case GET_BLOCK_SIZE:
                         *(DWORD*)buff = storage->SectorSize;
                         break;
-                //case CTRL_ERASE_SECTOR:
+                        //case CTRL_ERASE_SECTOR:
                 default:
                         return RES_PARERR;
         }
@@ -220,7 +221,7 @@ PFAT::~PFAT() {
                 ffs = NULL;
         }
 
-        if(label != NULL) {
+        if (label != NULL) {
                 delete label;
                 label = NULL;
         }
