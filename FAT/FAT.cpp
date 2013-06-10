@@ -95,11 +95,11 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                                         label[0] = '/';
                                         label[1] = 0x00;
                                 } else {
-                                        label = (uint8_t *)(operator new[] (2 + strlen(&lb[0])));
+                                        label = (uint8_t *)(operator new[] (13));
                                         label[0] = '/';
-                                        for (i = 0; lb[i] != 0x00; i++)
+                                        for (i = 0; lb[i] != 0x00 && i < 12; i++)
                                                 label[i + 1] = lb[i];
-                                        label[i + 1] = lb[i];
+                                        label[i + 1] = 0x00;
                                         // We will need to convert 'wide' chars, etc? yuck!
                                         // Life would be a whole lot easier if everything was just UTF-8!
                                 }
