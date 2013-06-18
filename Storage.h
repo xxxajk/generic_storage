@@ -8,7 +8,9 @@
 #ifndef STORAGE_H
 #define	STORAGE_H
 
+#ifndef MAX_DRIVERS
 #define MAX_DRIVERS 1 // must be 1 to 4
+#endif
 
 /*
  * Notes:
@@ -47,10 +49,8 @@ struct Storage {
 };
 
 typedef Storage storage_t;
-
 #ifdef _usb_h_
 // this lines must be copied into your new driver, to calculate maximum partitions possible.
-#define MAX_PARTS (4*MAX_DRIVERS*MASS_MAX_SUPPORTED_LUN)
 #define REDO 10
 // USB specific
 static USB Usb;
@@ -73,12 +73,12 @@ static BulkOnly *Bulk[MAX_DRIVERS] = {
 typedef struct Pvt {
         uint8_t lun;
         int B; // which "BulkOnly" instance
-        // these are for 'superblock' access.
-        uint8_t *label; // Volume label NULL for /
-        uint8_t volmap; // FatFS volume number
-
 } pvt_t;
-pvt_t info[MAX_PARTS];
+
+// to get _VOLUMES definition...
+#include <FAT/FatFS/src/ffconf.h>
+
+pvt_t info[_VOLUMES];
 
 bool PStatus(storage_t *sto) {
         return (Bulk[((pvt_t *) sto->private_data)->B]->WriteProtected(((pvt_t *) sto->private_data)->lun));

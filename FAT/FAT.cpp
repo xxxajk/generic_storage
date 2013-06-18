@@ -48,6 +48,8 @@ uint32_t faux_clock() {
 }
 
 PFAT::PFAT() {
+        label = NULL;
+        ffs = NULL;
         set_clock_call((void *)&faux_clock);
 }
 
@@ -57,7 +59,6 @@ int PFAT::Init(storage_t *sto, uint8_t lv) {
 
 /* Identify the FAT type. */
 int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
-        label = NULL;
         uint8_t buf[sto->SectorSize];
         TCHAR lb[256];
         lb[0] = 0x00;
@@ -229,29 +230,29 @@ PFAT::~PFAT() {
 // Allow callbacks from C to C++ class methods.
 extern "C" {
 
-        DSTATUS CPP_PFAT_disk_initialize(PFAT * pfat, BYTE pdrv) {
+        DSTATUS CPP_PFAT_disk_initialize(PFAT *pfat, BYTE pdrv) {
                 return pfat->disk_initialize(pdrv);
         }
 
-        DSTATUS CPP_PFAT_disk_status(PFAT * pfat, BYTE pdrv) {
+        DSTATUS CPP_PFAT_disk_status(PFAT *pfat, BYTE pdrv) {
 
                 return pfat->disk_status(pdrv);
         }
 
-        DRESULT CPP_PFAT_disk_read(PFAT * pfat, BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
+        DRESULT CPP_PFAT_disk_read(PFAT *pfat, BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
 
                 return pfat->disk_read(pdrv, buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_write(PFAT * pfat, BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
+        DRESULT CPP_PFAT_disk_write(PFAT *pfat, BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
                 return pfat->disk_write(pdrv, buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_ioctl(PFAT * pfat, BYTE pdrv, BYTE cmd, void* buff) {
+        DRESULT CPP_PFAT_disk_ioctl(PFAT *pfat, BYTE pdrv, BYTE cmd, void *buff) {
                 return pfat->disk_ioctl(pdrv, cmd, buff);
         }
 
-        uint32_t CPP_PFAT_get_fattime(PFAT * pfat) {
+        uint32_t CPP_PFAT_get_fattime(PFAT *pfat) {
                 return pfat->get_fattime();
         }
 }
