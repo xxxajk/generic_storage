@@ -24,6 +24,15 @@
 #include <FAT/FAT.h>
 #include <Storage.h>
 #include <FAT/FatFS/src/diskio.h>
+#include <RTClib.h>
+
+
+#ifdef RTCLIB_H
+RTC_DS1307 DS1307_RTC;
+RTC_Millis ARDUINO_MILLIS_RTC;
+#endif
+
+#ifndef RTCLIB_H
 
 uint32_t faux_clock() {
         /*
@@ -46,11 +55,32 @@ uint32_t faux_clock() {
         return 0x66210000UL;
 
 }
+#else
+
+uint32_t RTClock() {
+        if (DS1307_RTC.isrunning()) return DS1307_RTC.now().FatPacked();
+        return ARDUINO_MILLIS_RTC.now().FatPacked();
+}
+#endif
+
+static boolean WireStarted = false;
 
 PFAT::PFAT() {
         label = NULL;
         ffs = NULL;
+#ifndef RTCLIB_H
         set_clock_call((void *)&faux_clock);
+#else
+        if (!WireStarted) {
+                WireStarted = true;
+                Wire.begin();
+                if (!DS1307_RTC.isrunning())
+                        DS1307_RTC.adjust(DateTime(__DATE__, __TIME__));
+                if (!DS1307_RTC.isrunning())
+                        ARDUINO_MILLIS_RTC.begin(DateTime(__DATE__, __TIME__));
+        }
+        set_clock_call((void*)&RTClock);
+#endif
 }
 
 int PFAT::Init(storage_t *sto, uint8_t lv) {
