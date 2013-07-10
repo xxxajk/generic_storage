@@ -31,7 +31,7 @@
 /
 /  Note: FIX-ME: Setting of 1 is some how incompatible with LFN --xxajk
 /
-*/
+ */
 
 #ifndef _USE_LFN
 #define	_USE_LFN        0		/* 0 to 3 */
@@ -127,7 +127,7 @@
 /   857  - Turkish (OEM)
 /   862  - Hebrew (OEM)
 /   874  - Thai (OEM, Windows)
-/	1    - ASCII only (Valid for non LFN cfg.)
+/   1    - ASCII only (Valid for non LFN cfg.)
  */
 
 
@@ -143,7 +143,14 @@
 /   1: Enable relative path. f_chdrive() and f_chdir() are available.
 /   2: f_getcwd() is available in addition to 1.
 /
-/  Note that output of the f_readdir fnction is affected by this option. */
+/  Note that output of the f_readdir function is affected by this option, by
+/  turning off returning '.' and '..' entries.
+/
+/  That's stupid. '.' and '..' are of huge use, I'll have to fix this.
+/  For now I have to use the 2 setting.
+/  Thankfully avr-ld will throw out unused code, so we are not affected --xxajk
+/
+ */
 
 
 /*---------------------------------------------------------------------------/

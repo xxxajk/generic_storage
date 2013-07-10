@@ -11,7 +11,6 @@
 #ifndef MAX_DRIVERS
 #define MAX_DRIVERS 1 // must be 1 to 4
 #endif
-
 /*
  * Notes:
  * Read and Write do not care about sector counts, or how many to read.
@@ -50,161 +49,25 @@ struct Storage {
 
 typedef Storage storage_t;
 #ifdef _usb_h_
-// this lines must be copied into your new driver, to calculate maximum partitions possible.
-#define REDO 10
-// USB specific
-static USB Usb;
 
-static BulkOnly *Bulk[MAX_DRIVERS] = {
-        &(BulkOnly(&Usb))
-#if MAX_DRIVERS > 1
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_DRIVERS > 2
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_DRIVERS > 3
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_DRIVERS > 4
-        , &(BulkOnly(&Usb))
-#endif
-};
+extern USB Usb;
+
+#define FAT_MAX_ERROR_RETRIES 10
+
+extern BulkOnly *Bulk[MAX_DRIVERS];
+
 typedef struct Pvt {
         uint8_t lun;
         int B; // which "BulkOnly" instance
 } pvt_t;
 
-// to get _VOLUMES definition...
-#include <FAT/FatFS/src/ffconf.h>
-
-pvt_t info[_VOLUMES];
-
-bool PStatus(storage_t *sto) {
-        return (Bulk[((pvt_t *) sto->private_data)->B]->WriteProtected(((pvt_t *) sto->private_data)->lun));
-        //return 0;
-}
-
-int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto) {
-        uint8_t x = 0;
-        int tries = REDO;
-        int z;
-        //uint8_t sb[64];
-        while(tries) {
-                tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Read(((pvt_t *) sto->private_data)->lun, LBA, (sto->SectorSize), 1, buf));
-#if 0
-                if(UsbDEBUGlvl >= 0x64) {
-                        if(!x) {
-                                if(UsbDEBUGlvl > 0x68) {
-                                        for(int i = 0; i < sto->SectorSize; i++) {
-                                                printf("%02x  ", buf[i]);
-                                        }
-                                        printf("\r\n");
-                                }
-                        } else {
-                                printf("ERROR 0x%02x\r\n", x);
-                        }
-                }
-#endif
-                if(!x) break;
-        }
-#if 0
-        if(!x && UsbDEBUGlvl >= 0x64) printf("READ Success after %u tries\r\n", REDO - tries);
-#endif
-        int y = x;
-        return y;
-}
-
-int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto) {
-        //uint8_t sb[64];
-        int x = 0;
-        int tries = REDO;
-        while(tries) {
-                tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, 1, buf));
-                if(x == MASS_ERR_WRITE_PROTECTED) break;
-#if 0
-                if(UsbDEBUGlvl > 0x64) {
-                        if(x) {
-                                printf("ERROR 0x%02x\r\n", x);
-                        }
-                }
-#endif
-                if(!x) break;
-        }
-#if 0
-        if(!x && UsbDEBUGlvl >= 0x64) printf("Write Success after %u tries\r\n", REDO - tries);
-#endif
-        int y = x;
-        return y;
-}
-
-int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
-        //uint8_t sb[64];
-        //printf("PReads LBA=%8.8X, count=%i size=%i\r\n", LBA, count, (sto->SectorSize));
-        //for(uint16_t t=0; t<(sto->SectorSize * count); t++) {
-        //        buf[t] = 0x11;
-        //}
-        uint8_t x = 0;
-        int tries = REDO;
-        while(tries) {
-                tries--;
-                int z;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Read(((pvt_t *) sto->private_data)->lun, LBA, (sto->SectorSize), count, buf));
-#if 0
-                if(UsbDEBUGlvl >= 0x64) {
-                        if(!x) {
-                                if(UsbDEBUGlvl > 0x68) {
-                                        for(int i = 0; i < sto->SectorSize; i++) {
-                                                printf("%02x  ", buf[i]);
-                                        }
-                                        printf("\r\n");
-                                }
-                        } else {
-                                printf("ERROR 0x%02x\r\n", x);
-                        }
-                }
-#endif
-                if(!x) break;
-                delay(200);
-        }
-#if 0
-
-        if(!x && UsbDEBUGlvl >= 0x64) printf("Reads Success after %u tries\r\n", REDO - tries);
-#endif
-        int y = x;
-        return y;
-}
-
-int PWrites(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
-        //uint8_t sb[64];
-        int x = 0;
-        int tries = REDO;
-        while(tries) {
-                tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, count, buf));
-                if(x == MASS_ERR_WRITE_PROTECTED) break;
-#if 0
-                if(UsbDEBUGlvl > 0x64) {
-                        if(x) {
-                                printf("ERROR 0x%02x\r\n", x);
-                        }
-                }
-#endif
-                if(!x) break;
-                delay(200);
-        }
-#if 0
-        if(!x && UsbDEBUGlvl >= 0x64) printf("Writes Success after %u tries\r\n", REDO - tries);
-#endif
-        int y = x;
-        return y;
-}
-
+bool PStatus(storage_t *sto);
+int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto);
+int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto);
+int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
+int PWrites(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
 #endif
 // Your stuff here...
-
 
 #endif	/* STORAGE_H */
 

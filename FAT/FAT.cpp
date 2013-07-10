@@ -15,6 +15,7 @@
  * along with this Library.  If not, see
  * <http://www.gnu.org/licenses/>.
  */
+#include <Arduino.h>
 #include <avr/pgmspace.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -141,8 +142,6 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                         }
                 }
         }
-        //free(buf);
-
         return st;
 }
 
@@ -229,22 +228,6 @@ int PFAT::WriteSectors(uint32_t sector, uint8_t *buf, uint8_t count) {
         return storage->Writes(Offset + sector, buf, storage, count);
 }
 
-/*
- * Stuff to-do yet (mount points)
- *
-
-// translate path to volume number, *WARNING* modifies string in-place!
-void PFAT::TranslateMount(uint8_t *path) {
-
-}
-
-// Test if this instance controls the path asked for
-uint8_t PFAT::Mypath(uint8_t *path) {
-
-}
-                last_state = current_state;
-
- */
 PFAT::~PFAT() {
         if (ffs != NULL) {
                 f_mount(volmap, NULL);
@@ -257,6 +240,7 @@ PFAT::~PFAT() {
                 label = NULL;
         }
 }
+
 // Allow callbacks from C to C++ class methods.
 extern "C" {
 
