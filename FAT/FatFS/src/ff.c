@@ -3110,7 +3110,31 @@ FRESULT f_lseek(
         LEAVE_FF(fs, res);
 }
 
+// Don't need to lock here
+FRESULT f_clseek(FIL* fp, DWORD ofs, BYTE whence) {
+        DWORD off;
 
+        switch (whence) {
+                case SEEK_SET:
+                        // Seek from beginning of file
+                        off = ofs;
+                        break;
+                case SEEK_CUR:
+                        // Seek from current position
+                        off = fp->fptr + ofs;
+                        if(ofs && (off <= fp->fptr)) off = fp->fsize; // rollover, go to end
+                        break;
+                case SEEK_END:
+                        // Seek from end of file
+                        off = fp->fsize - ofs;
+                        if(ofs && (off >= fp->fptr)) off = 0; // rollover go to beginning
+                        break;
+                default:
+                        return FR_INVALID_PARAMETER;
+                        break;
+        }
+        return f_lseek(fp, off);
+}
 
 #if _FS_MINIMIZE <= 1
 /*-----------------------------------------------------------------------*/

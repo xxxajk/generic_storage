@@ -28,7 +28,14 @@ extern "C" {
 #error Wrong configuration file (ffconf.h).
 #endif
 
-
+#if _FS_MINIMIZE <= 2
+#include <stdio.h>
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#define SEEK_CUR 1
+#define SEEK_END 2
+#endif
+#endif
 
         /* Definitions of volume management */
 
@@ -203,7 +210,8 @@ extern "C" {
         FRESULT f_mount(BYTE vol, FATFS* fs); /* Mount/Unmount a logical drive */
         FRESULT f_open(FIL* fp, const TCHAR* path, BYTE mode); /* Open or create a file */
         FRESULT f_read(FIL* fp, void* buff, UINT btr, UINT* br); /* Read data from a file */
-        FRESULT f_lseek(FIL* fp, DWORD ofs); /* Move file pointer of a file object */
+        FRESULT f_lseek(FIL* fp, DWORD ofs); /* Change file pointer of a file object */
+        FRESULT f_clseek(FIL* fp, DWORD ofs, BYTE whence); /* Move file pointer of a file object */
         FRESULT f_close(FIL* fp); /* Close an open file object */
         FRESULT f_opendir(DIR* dj, const TCHAR* path); /* Open an existing directory */
         FRESULT f_readdir(DIR* dj, FILINFO* fno); /* Read a directory item */
