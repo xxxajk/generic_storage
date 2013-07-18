@@ -198,7 +198,8 @@ extern "C" {
                 FR_NOT_ENOUGH_CORE, /* (17) LFN working buffer could not be allocated */
                 FR_TOO_MANY_OPEN_FILES, /* (18) Number of open files > _FS_SHARE */
                 FR_INVALID_PARAMETER, /* (19) Given parameter is invalid */
-                FR_EOF  /* (20) end of file reached */
+                FR_EOF, /* (20) end of file reached */
+                FR_EXDEV /* (21) oldpath and newpath are not on the same mounted file system. */
         } FRESULT;
 
 
@@ -264,7 +265,7 @@ extern "C" {
         WCHAR ff_convert(WCHAR chr, UINT dir); /* OEM-Unicode bidirectional conversion */
         WCHAR ff_wtoupper(WCHAR chr); /* Unicode upper-case conversion */
 #endif
-	/* Memory functions */
+        /* Memory functions */
         void* ff_memalloc(UINT msize); /* Allocate memory block */
         void ff_memfree(void* mblock); /* Free memory block */
 
