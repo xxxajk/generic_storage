@@ -3277,7 +3277,8 @@ FRESULT f_getfree(
 
 
         /* Get drive number */
-        res = chk_mounted(&path, fatfs, 0);
+        // res = chk_mounted(&path, fatfs, 0); // WRONG! There is NO FREE SPACE if a volume is write protected!
+        res = chk_mounted(&path, fatfs, 1);
         fs = *fatfs;
         if(res == FR_OK) {
                 /* If free_clust is valid, return it without full cluster scan */
