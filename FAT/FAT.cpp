@@ -160,7 +160,7 @@ DSTATUS PFAT::disk_initialize(BYTE pdrv) {
 DSTATUS PFAT::disk_status(BYTE pdrv) {
         bool rc = storage->Status(storage);
         if (rc) return RES_OK;
-        return RES_WRPRT;
+        return STA_PROTECT;
 }
 
 DRESULT PFAT::disk_read(BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
