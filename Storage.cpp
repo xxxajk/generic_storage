@@ -2,18 +2,18 @@
 #include <masstorage.h>
 #include <Storage.h>
 
-BulkOnly *Bulk[MAX_DRIVERS] = {
+BulkOnly *Bulk[MAX_USB_MS_DRIVERS] = {
         &(BulkOnly(&Usb))
-#if MAX_DRIVERS > 1
+#if MAX_USB_MS_DRIVERS > 1
         , &(BulkOnly(&Usb))
 #endif
-#if MAX_DRIVERS > 2
+#if MAX_USB_MS_DRIVERS > 2
         , &(BulkOnly(&Usb))
 #endif
-#if MAX_DRIVERS > 3
+#if MAX_USB_MS_DRIVERS > 3
         , &(BulkOnly(&Usb))
 #endif
-#if MAX_DRIVERS > 4
+#if MAX_USB_MS_DRIVERS > 4
         , &(BulkOnly(&Usb))
 #endif
 };

@@ -8,8 +8,8 @@
 #ifndef STORAGE_H
 #define	STORAGE_H
 
-#ifndef MAX_DRIVERS
-#define MAX_DRIVERS 1 // must be 1 to 4
+#ifndef MAX_USB_MS_DRIVERS
+#define MAX_USB_MS_DRIVERS 1 // must be 1 to 4
 #endif
 /*
  * Notes:
@@ -54,7 +54,7 @@ extern USB Usb;
 
 #define FAT_MAX_ERROR_RETRIES 10
 
-extern BulkOnly *Bulk[MAX_DRIVERS];
+extern BulkOnly *Bulk[MAX_USB_MS_DRIVERS];
 
 typedef struct Pvt {
         uint8_t lun;
