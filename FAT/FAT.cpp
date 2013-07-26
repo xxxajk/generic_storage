@@ -121,14 +121,11 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                                 path[2] = '/';
                                 path[3] = 0x00;
                                 DWORD sn;
-                                int t = f_getlabel(&path[0], &lb[0], &sn);
-                                if (t) {
-                                        label = (uint8_t *)(operator new[] (2));
+                                int t = f_getlabel(path, lb, &sn);
+                                label = (uint8_t *)(operator new[] (13));
                                         label[0] = '/';
                                         label[1] = 0x00;
-                                } else {
-                                        label = (uint8_t *)(operator new[] (13));
-                                        label[0] = '/';
+                                if (!t) {
                                         for (i = 0; lb[i] != 0x00 && i < 12; i++)
                                                 label[i + 1] = lb[i];
                                         label[i + 1] = 0x00;
