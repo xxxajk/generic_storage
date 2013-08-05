@@ -105,17 +105,18 @@ extern void *__brkval;
 unsigned int getHeapend() {
         extern unsigned int __heap_start;
 
-        if ((unsigned int)__brkval == 0) {
-                return (unsigned int)&__heap_start;
+        if((unsigned int) __brkval == 0) {
+                return(unsigned int) &__heap_start;
         } else {
-                return (unsigned int)__brkval;
+                return(unsigned int) __brkval;
         }
 }
+
 unsigned int freeHeap() {
-        if (SP < (unsigned int)__malloc_heap_start) {
-                return ((unsigned int)__malloc_heap_end - getHeapend());
+        if(SP < (unsigned int) __malloc_heap_start) {
+                return((unsigned int) __malloc_heap_end - getHeapend());
         } else {
-                return (SP - getHeapend());
+                return(SP - getHeapend());
         }
 }
 
@@ -398,7 +399,7 @@ typedef struct {
 
 
 /* Name status flags */
-#define NS		11		/* Index of name status byte in fn[] */
+#define NS		11	/* Index of name status byte in fn[] */
 #define NS_LOSS		0x01	/* Out of 8.3 format */
 #define NS_LFN		0x02	/* Force to create LFN entry */
 #define NS_LAST		0x04	/* Last segment */
@@ -524,7 +525,7 @@ static WCHAR LfnBuf[_MAX_LFN + 1];
 
 #elif _USE_LFN == 3 		/* LFN feature with dynamic working buffer on the heap */
 #define	DEF_NAMEBUF			BYTE sfn[12]; WCHAR *lfn
-#define INIT_BUF(dobj)		{ lfn = ff_memalloc((_MAX_LFN + 1) * 2); \
+#define INIT_BUF(dobj)		{ lfn = ff_memalloc((_MAX_LFN + 1) * sizeof(WCHAR)); \
 							  if (!lfn) LEAVE_FF((dobj).fs, FR_NOT_ENOUGH_CORE); \
 							  (dobj).lfn = lfn;	(dobj).fn = sfn; }
 #define	FREE_BUF()			ff_memfree(lfn)
@@ -535,7 +536,7 @@ static WCHAR LfnBuf[_MAX_LFN + 1];
 
 
 #ifdef _EXCVT
-static const BYTE ExCvt[] PROGMEM = _EXCVT; /* Upper conversion table for extended chars */
+static const BYTE ExCvt[] GPROGMEM = _EXCVT; /* Upper conversion table for extended chars */
 #endif
 
 /*--------------------------------------------------------------------------
@@ -548,6 +549,11 @@ static const BYTE ExCvt[] PROGMEM = _EXCVT; /* Upper conversion table for extend
 /*-----------------------------------------------------------------------*/
 /* String functions                                                      */
 /*-----------------------------------------------------------------------*/
+#if defined(AVR)
+#define mem_cpy memcpy
+#define mem_set memset
+#define mem_cmp memcmp
+#else
 
 /* Copy memory to memory */
 static
@@ -585,34 +591,35 @@ int mem_cmp(const void* dst, const void* src, UINT cnt) {
         while(cnt-- && (r = *d++ - *s++) == 0);
         return r;
 }
+#endif
 
 /* Check if chr is contained in the string */
 static int chk_chr(
 #if _TABLES_IN_PGMSPACE
-PGM_P
+        PGM_P
 #else
-const char*
+        const char*
 #endif
-str , int chr
-) {
+        str, int chr
+        ) {
         while(
 #if _TABLES_IN_PGMSPACE
                 pgm_read_byte_near(str)
 #else
-                *str
+                * str
 #endif
                 &&
 #if _TABLES_IN_PGMSPACE
                 pgm_read_byte_near(str)
 #else
-                *str
+                * str
 #endif
                 != chr) str++;
         return
 #if _TABLES_IN_PGMSPACE
-                pgm_read_byte_near(str)
+        pgm_read_byte_near(str)
 #else
-                *str
+        * str
 #endif
                 ;
 }
@@ -1257,7 +1264,7 @@ FRESULT dir_alloc(
                         res = dir_next(dj, 1); /* Next entry with table stretch enabled */
                 } while(res == FR_OK);
         }
-        if (res == FR_NO_FILE) res = FR_DENIED; // Official patch, 15 March 2013
+        if(res == FR_NO_FILE) res = FR_DENIED; // Official patch, 15 March 2013
         return res;
 }
 #endif
@@ -1486,7 +1493,8 @@ FRESULT dir_find(
         if(res != FR_OK) return res;
 
 #if _USE_LFN
-        ord = sum = 0xFF;
+        ord = 0xFF;
+        sum = 0xFF;
 #endif
         do {
                 res = move_window(dj->fs, dj->sect);
@@ -1740,7 +1748,8 @@ FRESULT create_name(
         /* Create LFN in Unicode */
         for(p = *path; *p == '/' || *p == '\\'; p++); /* Strip duplicated separator */
         lfn = dj->lfn;
-        si = di = 0;
+        si = 0;
+        di = 0;
         for(;;) {
                 w = p[si++]; /* Get a character */
                 if(w < ' ' || w == '/' || w == '\\') break; /* Break on end of segment */
@@ -1788,7 +1797,8 @@ FRESULT create_name(
         if(si) cf |= NS_LOSS | NS_LFN;
         while(di && lfn[di - 1] != '.') di--; /* Find extension (di<=si: no extension) */
 
-        b = i = 0;
+        b = 0;
+        i = 0;
         ni = 8;
         for(;;) {
                 w = lfn[si++]; /* Get an LFN char */
@@ -1872,7 +1882,9 @@ FRESULT create_name(
         for(p = *path; *p == '/' || *p == '\\'; p++); /* Strip duplicated separator */
         sfn = dj->fn;
         mem_set(sfn, ' ', 11);
-        si = i = b = 0;
+        si = 0;
+        i = 0;
+        b = 0;
         ni = 8;
 #if _FS_RPATH
         if(p[si] == '.') { /* Is this a dot entry? */
@@ -2334,7 +2346,6 @@ BYTE f_next_mount(void) {
         return _VOLUMES;
 }
 
-
 FRESULT f_stat_mount(BYTE vol) {
         if(vol >= _VOLUMES) /* Check if the drive number is valid */
                 return FR_INVALID_DRIVE;
@@ -2642,8 +2653,9 @@ FRESULT f_write(
                 LEAVE_FF(fs, FR_INT_ERR);
         if(!(fp->flag & FA_WRITE)) /* Check access mode */
                 LEAVE_FF(fs, FR_DENIED);
-        if((DWORD) (fp->fsize + btw) < fp->fsize) btw = 0; /* File size cannot reach 4GB */
-
+        /* Official patch June 22, 2013 */
+        //if((DWORD) (fp->fsize + btw) < fp->fsize) btw = 0; /* File size cannot reach 4GB */
+        if((DWORD) (fp->fptr + btw) < fp->fptr) btw = 0; /* File size cannot reach 4GB */
         for(; btw; /* Repeat until all data written */
                 wbuff += wcnt, fp->fptr += wcnt, *bw += wcnt, btw -= wcnt) {
                 if((fp->fptr % SS(fs)) == 0) { /* On the sector boundary? */
@@ -3111,10 +3123,11 @@ FRESULT f_lseek(
 }
 
 // Don't need to lock here
+
 FRESULT f_clseek(FIL* fp, DWORD ofs, BYTE whence) {
         DWORD off;
 
-        switch (whence) {
+        switch(whence) {
                 case SEEK_SET:
                         // Seek from beginning of file
                         off = ofs;

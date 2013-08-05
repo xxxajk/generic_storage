@@ -13,8 +13,8 @@
 #else			/* Embedded platform */
 
 /* These types must be 16-bit, 32-bit or larger integer */
-typedef int32_t INT;
-typedef uint32_t UINT;
+typedef int16_t INT;
+typedef uint16_t UINT;
 
 /* These types must be 8-bit integer */
 typedef int8_t CHAR;

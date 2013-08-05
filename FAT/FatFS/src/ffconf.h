@@ -34,7 +34,7 @@
  */
 
 #ifndef _USE_LFN
-#define	_USE_LFN        0		/* 0 to 3 */
+#define	_USE_LFN        3		/* 0 to 3 */
 #endif
 #define	_MAX_LFN	255		/* Maximum LFN length to handle (12 to 255) */
 /* The _USE_LFN option switches the LFN support.
@@ -44,12 +44,12 @@
 /   2: Enable LFN with dynamic working buffer on the STACK.
 /   3: Enable LFN with dynamic working buffer on the HEAP.
 /
-/  >>>>>>>>>>>>> Note: 1 and 2 do not work for me, 0 and 3 do :-) --xxajk
-/
 /  The LFN working buffer occupies (_MAX_LFN + 1) * 2 bytes. To enable LFN,
 /  Unicode handling functions ff_convert() and ff_wtoupper() must be added
 /  to the project. When enable to use heap, memory control functions
-/  ff_memalloc() and ff_memfree() must be added to the project. */
+/  ff_memalloc() and ff_memfree() must be added to the project.
+
+ */
 
 #define _FS_READONLY	0	/* 0:Read/Write or 1:Read only */
 /* Setting _FS_READONLY to 1 defines read only configuration. This removes
@@ -190,13 +190,17 @@
 #define _TABLES_IN_PGMSPACE 1
 #define GWSTR(X) pgm_read_word_near(&X)
 #define GSTR(X) pgm_read_byte_near(&X)
+#define GPROGMEM PROGMEM
+#define GPSTR(X) PSTR(X)
+#define GCONST
 #else
 #define _TABLES_IN_PGMSPACE 0
 #define GSTR
 #define GWSTR
-#define PROGMEM
+#define GPROGMEM
 #define memcpy_P mem_cpy
-#define PSTR(X) X
+#define GPSTR(X) X
+#define GCONST const
 #endif
 
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN
