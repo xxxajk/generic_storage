@@ -28,9 +28,6 @@
 /* When _FS_TINY is set to 1, FatFs uses the sector buffer in the file system
 /  object instead of the sector buffer in the individual file object for file
 /  data transfer. This reduces memory consumption 512 bytes each file object.
-/
-/  Note: FIX-ME: Setting of 1 is some how incompatible with LFN --xxajk
-/
  */
 
 #ifndef _USE_LFN
