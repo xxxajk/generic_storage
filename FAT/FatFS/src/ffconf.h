@@ -75,10 +75,6 @@
 #define	_USE_MKFS	1	/* 0:Disable or 1:Enable */
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
-/*
- * Trips gcc 4.3.2 bug
- * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=18251
- */
 #define	_USE_FASTSEEK	0	/* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
 
@@ -158,12 +154,14 @@
 /* Number of volumes (logical drives) to be used. */
 #endif
 
+#ifndef _MAX_SS
 #define	_MAX_SS		512		/* 512, 1024, 2048 or 4096 */
 /* Maximum sector size to be handled.
 /  Always set 512 for memory card and hard disk but a larger value may be
 /  required for on-board flash memory, floppy disk and optical disk.
 /  When _MAX_SS is larger than 512, it configures FatFs to variable sector size
 /  and GET_SECTOR_SIZE command must be implemented to the disk_ioctl function. */
+#endif
 
 
 #define	_MULTI_PARTITION	0	/* 0:Single partition, 1:Enable multiple partition */
@@ -189,7 +187,7 @@
 #define GSTR(X) pgm_read_byte_near(&X)
 #define GPROGMEM PROGMEM
 #define GPSTR(X) PSTR(X)
-#define GCONST
+#define GCONST const
 #else
 #define _TABLES_IN_PGMSPACE 0
 #define GSTR

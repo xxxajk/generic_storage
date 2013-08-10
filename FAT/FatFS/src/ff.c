@@ -2980,19 +2980,19 @@ FRESULT f_lseek(
 
 #if _USE_FASTSEEK
         if(fp->cltbl) { /* Fast seek */
-                DWORD cl, pcl, ncl, tcl, dsc, tlen, ulen, *tbl;
-
+                DWORD tlen = *fp->cltbl;
                 if(ofs == CREATE_LINKMAP) { /* Create CLMT */
-                        tbl = fp->cltbl;
-                        tlen = *tbl;
+                        DWORD *tbl = fp->cltbl;
+                        //DWORD tlen = *tbl;
                         tbl++;
-                        ulen = 2; /* Given table size and required table size */
-                        cl = fp->sclust; /* Top of the chain */
+                        DWORD ulen = 2; /* Given table size and required table size */
+                        DWORD cl = fp->sclust; /* Top of the chain */
                         if(cl) {
                                 do {
                                         /* Get a fragment */
-                                        tcl = cl;
-                                        ncl = 0;
+                                        DWORD tcl = cl;
+                                        DWORD ncl = 0;
+                                        DWORD pcl;
                                         ulen += 2; /* Top, length and used items */
                                         do {
                                                 pcl = cl;
@@ -3019,7 +3019,7 @@ FRESULT f_lseek(
                         fp->fptr = ofs; /* Set file pointer */
                         if(ofs) {
                                 fp->clust = clmt_clust(fp, ofs - 1);
-                                dsc = clust2sect(fs, fp->clust);
+                                DWORD dsc = clust2sect(fs, fp->clust);
                                 if(!dsc) ABORT(fs, FR_INT_ERR);
                                 dsc += (ofs - 1) / SS(fs) & (fs->csize - 1);
                                 if(fp->fptr % SS(fs) && dsc != fp->dsect) { /* Refill sector cache if needed */
@@ -3051,7 +3051,7 @@ FRESULT f_lseek(
                         ) ofs = fp->fsize;
 
                 ifptr = fp->fptr;
-                fp->fptr = nsect = 0;
+                fp->fptr = 0; nsect = 0;
                 if(ofs) {
                         bcs = (DWORD) fs->csize * SS(fs); /* Cluster size (byte) */
                         if(ifptr > 0 &&
