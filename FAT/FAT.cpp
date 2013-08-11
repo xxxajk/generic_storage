@@ -179,7 +179,7 @@ DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
                 case GET_SECTOR_COUNT:
                         *(DWORD*)buff = storage->TotalSectors;
                         break;
-                case GET_BLOCK_SIZE:
+                case GET_SECTOR_SIZE:
                         *(DWORD*)buff = storage->SectorSize;
                         break;
                         //case CTRL_ERASE_SECTOR:

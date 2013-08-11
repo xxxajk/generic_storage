@@ -75,9 +75,10 @@
 #define	_USE_MKFS	1	/* 0:Disable or 1:Enable */
 /* To enable f_mkfs function, set _USE_MKFS to 1 and set _FS_READONLY to 0 */
 
+#ifndef _USE_FASTSEEK
 #define	_USE_FASTSEEK	0	/* 0:Disable or 1:Enable */
 /* To enable fast seek feature, set _USE_FASTSEEK to 1. */
-
+#endif
 
 #define _USE_LABEL	1	/* 0:Disable or 1:Enable */
 /* To enable volume label functions, set _USE_LABEL to 1 */
@@ -91,6 +92,7 @@
 / Locale and Namespace Configurations
 /----------------------------------------------------------------------------*/
 
+#ifndef _CODE_PAGE
 #define _CODE_PAGE 437
 /* The _CODE_PAGE specifies the OEM code page to be used on the target system.
 /  Incorrect setting of the code page can cause a file open failure.
@@ -122,7 +124,7 @@
 /   874  - Thai (OEM, Windows)
 /   1    - ASCII only (Valid for non LFN cfg.)
  */
-
+#endif
 
 #define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode (UTF-8) */
 /* To switch the character code set on FatFs API to Unicode,
