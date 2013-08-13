@@ -4242,6 +4242,7 @@ FRESULT f_fdisk(
 
 
 #ifdef _USE_STRFUNC
+#if _USE_STRFUNC
 /*-----------------------------------------------------------------------*/
 /* Get a string from the file                                            */
 
@@ -4473,4 +4474,5 @@ int f_printf(
 }
 
 #endif /* !_FS_READONLY */
+#endif /* _USE_STRFUNC */
 #endif /* _USE_STRFUNC */

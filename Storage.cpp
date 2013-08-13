@@ -19,16 +19,16 @@ BulkOnly *Bulk[MAX_USB_MS_DRIVERS] = {
 };
 
 bool PStatus(storage_t *sto) {
-        return(Bulk[((pvt_t *) sto->private_data)->B]->WriteProtected(((pvt_t *) sto->private_data)->lun));
+        return (Bulk[((pvt_t *)sto->private_data)->B]->WriteProtected(((pvt_t *)sto->private_data)->lun));
 }
 
 int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto) {
         uint8_t x = 0;
         int tries = FAT_MAX_ERROR_RETRIES;
-        while(tries) {
+        while (tries) {
                 tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Read(((pvt_t *) sto->private_data)->lun, LBA, (sto->SectorSize), 1, buf));
-                if(!x) break;
+                x = (Bulk[((pvt_t *)sto->private_data)->B]->Read(((pvt_t *)sto->private_data)->lun, LBA, (sto->SectorSize), 1, buf));
+                if (!x) break;
         }
         int y = x;
         return y;
@@ -37,11 +37,11 @@ int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto) {
 int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto) {
         int x = 0;
         int tries = FAT_MAX_ERROR_RETRIES;
-        while(tries) {
+        while (tries) {
                 tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, 1, buf));
-                if(x == MASS_ERR_WRITE_PROTECTED) break;
-                if(!x) break;
+                x = (Bulk[((pvt_t *)sto->private_data)->B]->Write(((pvt_t *)sto->private_data)->lun, LBA, sto->SectorSize, 1, buf));
+                if (x == MASS_ERR_WRITE_PROTECTED) break;
+                if (!x) break;
         }
         int y = x;
         return y;
@@ -50,10 +50,10 @@ int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto) {
 int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
         uint8_t x = 0;
         int tries = FAT_MAX_ERROR_RETRIES;
-        while(tries) {
+        while (tries) {
                 tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Read(((pvt_t *) sto->private_data)->lun, LBA, (sto->SectorSize), count, buf));
-                if(!x) break;
+                x = (Bulk[((pvt_t *)sto->private_data)->B]->Read(((pvt_t *)sto->private_data)->lun, LBA, (sto->SectorSize), count, buf));
+                if (!x) break;
                 delay(200);
         }
         int y = x;
@@ -63,11 +63,11 @@ int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
 int PWrites(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count) {
         int x = 0;
         int tries = FAT_MAX_ERROR_RETRIES;
-        while(tries) {
+        while (tries) {
                 tries--;
-                x = (Bulk[((pvt_t *) sto->private_data)->B]->Write(((pvt_t *) sto->private_data)->lun, LBA, sto->SectorSize, count, buf));
-                if(x == MASS_ERR_WRITE_PROTECTED) break;
-                if(!x) break;
+                x = (Bulk[((pvt_t *)sto->private_data)->B]->Write(((pvt_t *)sto->private_data)->lun, LBA, sto->SectorSize, count, buf));
+                if (x == MASS_ERR_WRITE_PROTECTED) break;
+                if (!x) break;
                 delay(200);
         }
         int y = x;

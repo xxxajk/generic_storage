@@ -538,11 +538,11 @@ public:
         virtual ~PFAT();
         void set_clock_call(void *);
         uint32_t get_fattime();
-        DSTATUS disk_initialize(BYTE);
-        DSTATUS disk_status(BYTE);
-        DRESULT disk_read(BYTE, BYTE *, DWORD, BYTE);
-        DRESULT disk_write(BYTE, const BYTE *, DWORD, BYTE);
-        DRESULT disk_ioctl(BYTE, BYTE, void *);
+        DSTATUS disk_initialize();
+        DSTATUS disk_status();
+        DRESULT disk_read(BYTE *, DWORD, BYTE);
+        DRESULT disk_write(const BYTE *, DWORD, BYTE);
+        DRESULT disk_ioctl(BYTE, void *);
         storage_t *storage;
         FATFS *ffs;
         uint8_t *label; // Volume label NULL for /

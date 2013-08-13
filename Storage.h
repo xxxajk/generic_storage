@@ -11,6 +11,7 @@
 #ifndef MAX_USB_MS_DRIVERS
 #define MAX_USB_MS_DRIVERS 1 // must be 1 to 4
 #endif
+
 /*
  * Notes:
  * Read and Write do not care about sector counts, or how many to read.

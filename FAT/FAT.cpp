@@ -150,29 +150,29 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
     disk_ioctl - Control device dependent features
     get_fattime - Get current time
  */
-DSTATUS PFAT::disk_initialize(BYTE pdrv) {
-        return disk_status(pdrv);
+DSTATUS PFAT::disk_initialize(void) {
+        return disk_status();
 }
 
-DSTATUS PFAT::disk_status(BYTE pdrv) {
+DSTATUS PFAT::disk_status(void) {
         bool rc = storage->Status(storage);
         if (rc) return RES_OK;
         return STA_PROTECT;
 }
 
-DRESULT PFAT::disk_read(BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
+DRESULT PFAT::disk_read(BYTE *buff, DWORD sector, BYTE count) {
         int rc = storage->Reads(sector, (uint8_t*)buff, storage, count);
         if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
-DRESULT PFAT::disk_write(BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
+DRESULT PFAT::disk_write(const BYTE *buff, DWORD sector, BYTE count) {
         int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
         if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
-DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
+DRESULT PFAT::disk_ioctl(BYTE cmd, void* buff) {
         switch (cmd) {
                 case CTRL_SYNC:
                         break;
@@ -180,7 +180,7 @@ DRESULT PFAT::disk_ioctl(BYTE pdrv, BYTE cmd, void* buff) {
                         *(DWORD*)buff = storage->TotalSectors;
                         break;
                 case GET_SECTOR_SIZE:
-                        *(DWORD*)buff = storage->SectorSize;
+                        *(WORD*)buff = storage->SectorSize;
                         break;
                         //case CTRL_ERASE_SECTOR:
                 default:
@@ -241,26 +241,24 @@ PFAT::~PFAT() {
 // Allow callbacks from C to C++ class methods.
 extern "C" {
 
-        DSTATUS CPP_PFAT_disk_initialize(PFAT *pfat, BYTE pdrv) {
-                return pfat->disk_initialize(pdrv);
+        DSTATUS CPP_PFAT_disk_initialize(PFAT *pfat) {
+                return pfat->disk_initialize();
         }
 
-        DSTATUS CPP_PFAT_disk_status(PFAT *pfat, BYTE pdrv) {
-
-                return pfat->disk_status(pdrv);
+        DSTATUS CPP_PFAT_disk_status(PFAT *pfat) {
+                return pfat->disk_status();
         }
 
-        DRESULT CPP_PFAT_disk_read(PFAT *pfat, BYTE pdrv, BYTE *buff, DWORD sector, BYTE count) {
-
-                return pfat->disk_read(pdrv, buff, sector, count);
+        DRESULT CPP_PFAT_disk_read(PFAT *pfat, BYTE *buff, DWORD sector, BYTE count) {
+                return pfat->disk_read(buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_write(PFAT *pfat, BYTE pdrv, const BYTE *buff, DWORD sector, BYTE count) {
-                return pfat->disk_write(pdrv, buff, sector, count);
+        DRESULT CPP_PFAT_disk_write(PFAT *pfat, const BYTE *buff, DWORD sector, BYTE count) {
+                return pfat->disk_write(buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_ioctl(PFAT *pfat, BYTE pdrv, BYTE cmd, void *buff) {
-                return pfat->disk_ioctl(pdrv, cmd, buff);
+        DRESULT CPP_PFAT_disk_ioctl(PFAT *pfat, BYTE cmd, void *buff) {
+                return pfat->disk_ioctl(cmd, buff);
         }
 
         uint32_t CPP_PFAT_get_fattime(PFAT *pfat) {

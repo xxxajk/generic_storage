@@ -96,16 +96,17 @@ extern "C" {
 
 #if _USB_ == 1
 struct PFAT;
-DSTATUS CPP_PFAT_disk_initialize(struct PFAT*, BYTE pdrv);
-#define DISK_INITIALIZE(a) CPP_PFAT_disk_initialize(fs->pfat,a)
-DSTATUS CPP_PFAT_disk_status(struct PFAT*, BYTE pdrv);
-#define DISK_STATUS(a) CPP_PFAT_disk_status(fs->pfat,a)
-DRESULT CPP_PFAT_disk_read(struct PFAT*, BYTE pdrv, BYTE* buff, DWORD sector, BYTE count);
-#define DISK_READ(a,b,c,d) CPP_PFAT_disk_read(fs->pfat,a,b,c,d)
-DRESULT CPP_PFAT_disk_write(struct PFAT*, BYTE pdrv, const BYTE* buff, DWORD sector, BYTE count);
-#define DISK_WRITE(a,b,c,d) CPP_PFAT_disk_write(fs->pfat,a,b,c,d)
-DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, BYTE pdrv, BYTE cmd, void* buff);
-#define DISK_IOCTL(a,b,c) CPP_PFAT_disk_ioctl(fs->pfat,a,b,c)
+DSTATUS CPP_PFAT_disk_status(struct PFAT*);
+#define DISK_STATUS(a) CPP_PFAT_disk_status(fs->pfat)
+DSTATUS CPP_PFAT_disk_initialize(struct PFAT*);
+//#define DISK_INITIALIZE(a) CPP_PFAT_disk_initialize(fs->pfat)
+#define DISK_INITIALIZE(a) CPP_PFAT_disk_status(fs->pfat)
+DRESULT CPP_PFAT_disk_read(struct PFAT*, BYTE* buff, DWORD sector, BYTE count);
+#define DISK_READ(a,b,c,d) CPP_PFAT_disk_read(fs->pfat,b,c,d)
+DRESULT CPP_PFAT_disk_write(struct PFAT*, const BYTE* buff, DWORD sector, BYTE count);
+#define DISK_WRITE(a,b,c,d) CPP_PFAT_disk_write(fs->pfat,b,c,d)
+DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, BYTE cmd, void* buff);
+#define DISK_IOCTL(a,b,c) CPP_PFAT_disk_ioctl(fs->pfat,b,c)
 DWORD CPP_PFAT_get_fattime(struct PFAT*);
 #define GET_FATTIME() CPP_PFAT_get_fattime(fs->pfat)
 #else
