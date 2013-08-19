@@ -3964,7 +3964,7 @@ FRESULT f_mkfs(
         if(stat & STA_NOINIT) return FR_NOT_READY;
         if(stat & STA_PROTECT) return FR_WRITE_PROTECTED;
 #if _MAX_SS != 512					/* Get disk sector size */
-        if(DISK_IOCTL(pdrv, GET_SECTOR_SIZE, &SS(fs)) != RES_OK || SS(fs) > _MAX_SS)
+        if(DISK_IOCTL(pdrv, GET_SECTOR_SIZE, &fs->ssize) != RES_OK || fs->ssize > _MAX_SS)
                 return FR_DISK_ERR;
 #endif
         if(_MULTI_PARTITION && part) {

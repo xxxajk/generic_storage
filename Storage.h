@@ -37,7 +37,7 @@
  */
 
 
-struct Storage {
+typedef struct Storage {
         int (*Read)(uint32_t, uint8_t *, struct Storage *); // single sector read
         int (*Write)(uint32_t, uint8_t *, struct Storage *); // single sector write
         int (*Reads)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector read
@@ -46,9 +46,8 @@ struct Storage {
         uint16_t SectorSize; // physical or translated size on the physical media
         uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
         void *private_data; // Anything you need, or nothing at all.
-};
+} storage_t;
 
-typedef Storage storage_t;
 #ifdef _usb_h_
 
 extern USB Usb;
@@ -62,6 +61,7 @@ typedef struct Pvt {
         int B; // which "BulkOnly" instance
 } pvt_t;
 
+void InitStorage(void);
 bool PStatus(storage_t *sto);
 int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto);
 int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto);

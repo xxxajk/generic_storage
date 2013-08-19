@@ -2,21 +2,17 @@
 #include <masstorage.h>
 #include <Storage.h>
 
-BulkOnly *Bulk[MAX_USB_MS_DRIVERS] = {
-        &(BulkOnly(&Usb))
-#if MAX_USB_MS_DRIVERS > 1
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_USB_MS_DRIVERS > 2
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_USB_MS_DRIVERS > 3
-        , &(BulkOnly(&Usb))
-#endif
-#if MAX_USB_MS_DRIVERS > 4
-        , &(BulkOnly(&Usb))
-#endif
-};
+BulkOnly *Bulk[MAX_USB_MS_DRIVERS];
+
+/**
+ * This must be called before using generic_storage. This works around a G++ bug.
+ * Thanks to Lei Shi for the heads up.
+ */
+void InitStorage(void) {
+        for(int i=0; i< MAX_USB_MS_DRIVERS; i++) {
+                Bulk[i]= new BulkOnly(&Usb);
+        }
+}
 
 bool PStatus(storage_t *sto) {
         return (Bulk[((pvt_t *)sto->private_data)->B]->WriteProtected(((pvt_t *)sto->private_data)->lun));
