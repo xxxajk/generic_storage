@@ -28,32 +28,42 @@ PCPartition::PCPartition() {
 /* Identify partition types, if any. If no partition exists, default to super mode. */
 int PCPartition::Init(storage_t *sto) {
         //printf("Sector size = %i\r\n", sto->SectorSize);
-        //uint8_t mybuf[sto->SectorSize *2];
-        // WARNING, CAN FAIL!
-        uint8_t buf[sto->SectorSize];
-        //buf = (uint8_t *)malloc(sto->SectorSize);
-        st = (int)((sto->Read)(0, buf, sto));
-        if (!st) {
-                mbr_t *MBR = (mbr_t *)buf;
-                // verify that the partition sig is OK.
-                // Anything else needs to be checked by the file system.
-                if (MBR->mbrSig0 != 0x55 || MBR->mbrSig1 != 0xAA) {
-                        printf_P(PSTR("Bad sig? %02x %02x\r\n"), MBR->mbrSig0, MBR->mbrSig1);
-                        st = -1;
-                } else {
-                        // Problem... partition seg and MBR sig are identical?!
-                        // look for 46  41  54 (FAT) @ 0x36
-                        if (buf[0x36] == 0x46 && buf[0x37] == 0x41 && buf[0x38] == 0x54) st = -1;
-                        if(!st && buf[0x52] == 0x46 && buf[0x53] == 0x41 && buf[0x54] == 0x54) st = -1;
-                        if (!st) {
-                                for (int i = 0; i < 4; i++) {
-                                        part[i] = MBR->part[i]; // Wow! This acts like memcpy?!
-                                        if (part[i].type != 0x00) {
-                                                if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
+
+        st = -1;
+        if (sto->SectorSize <= _MAX_SS) {
+
+#if 0
+                uint8_t *buf = (uint8_t *)malloc(sto->SectorSize);
+#else
+                // WARNING, CAN FAIL! this requires _MAX_SS stack space.
+                uint8_t buf[sto->SectorSize];
+#endif
+                st = (int)((sto->Read)(0, buf, sto));
+                if (!st) {
+                        mbr_t *MBR = (mbr_t *)buf;
+                        // verify that the partition sig is OK.
+                        // Anything else needs to be checked by the file system.
+                        if (MBR->mbrSig0 != 0x55 || MBR->mbrSig1 != 0xAA) {
+                                printf_P(PSTR("Bad sig? %02x %02x\r\n"), MBR->mbrSig0, MBR->mbrSig1);
+                                st = -1;
+                        } else {
+                                // Problem... partition seg and MBR sig are identical?!
+                                // look for 46  41  54 (FAT) @ 0x36
+                                if (buf[0x36] == 0x46 && buf[0x37] == 0x41 && buf[0x38] == 0x54) st = -1;
+                                if (!st && buf[0x52] == 0x46 && buf[0x53] == 0x41 && buf[0x54] == 0x54) st = -1;
+                                if (!st) {
+                                        for (int i = 0; i < 4; i++) {
+                                                part[i] = MBR->part[i]; // Wow! This acts like memcpy?!
+                                                if (part[i].type != 0x00) {
+                                                        if (part[i].boot != 0x80 && part[i].boot != 0x00) st = -1;
+                                                }
                                         }
                                 }
                         }
                 }
+#if 0
+                free(buf);
+#endif
         }
         return st;
 }

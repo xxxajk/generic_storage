@@ -100,26 +100,6 @@
 #include "diskio.h"		/* Declarations of low level disk I/O functions */
 
 
-extern void *__brkval;
-
-unsigned int getHeapend() {
-        extern unsigned int __heap_start;
-
-        if((unsigned int) __brkval == 0) {
-                return(unsigned int) &__heap_start;
-        } else {
-                return(unsigned int) __brkval;
-        }
-}
-
-unsigned int freeHeap() {
-        if(SP < (unsigned int) __malloc_heap_start) {
-                return((unsigned int) __malloc_heap_end - getHeapend());
-        } else {
-                return(SP - getHeapend());
-        }
-}
-
 /*--------------------------------------------------------------------------
 
    Module Private Definitions
@@ -549,7 +529,7 @@ static const BYTE ExCvt[] GPROGMEM = _EXCVT; /* Upper conversion table for exten
 /*-----------------------------------------------------------------------*/
 /* String functions                                                      */
 /*-----------------------------------------------------------------------*/
-#if defined(AVR)
+#ifdef __GNUC__
 #define mem_cpy memcpy
 #define mem_set memset
 #define mem_cmp memcmp
@@ -668,7 +648,7 @@ FRESULT chk_lock(/* Check if the file can be accessed */
         UINT i, be;
 
         /* Search file semaphore table */
-        for(i = be = 0; i < _FS_LOCK; i++) {
+        for(i = 0, be = 0; i < _FS_LOCK; i++) {
                 if(Files[i].fs) { /* Existing entry */
                         if(Files[i].fs == dj->fs && /* Check if the file matched with an open file */
                                 Files[i].clu == dj->sclust &&
