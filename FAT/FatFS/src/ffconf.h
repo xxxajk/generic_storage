@@ -18,6 +18,11 @@
    The value defines how many files can be opened simultaneously. */
 #endif
 
+/* Set to 1 to do a proper full mount at mount time instead of deferred. */
+#ifndef DO_FULL_MOUNT
+#define DO_FULL_MOUNT 1
+#endif
+
 /*---------------------------------------------------------------------------/
 / Functions and Buffer Configurations
 /----------------------------------------------------------------------------*/

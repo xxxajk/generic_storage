@@ -750,15 +750,16 @@ FRESULT sync_window(
         ) {
         DWORD wsect;
         UINT nf;
-
+        DWORD limit = fs->fatbase + fs->fsize;
 
         if(fs->wflag) { /* Write back the sector if it is dirty */
                 wsect = fs->winsect; /* Current sector number */
                 if(DISK_WRITE(fs->drv, fs->win, wsect, 1) != RES_OK)
                         return FR_DISK_ERR;
                 fs->wflag = 0;
-                if(wsect >= fs->fatbase && wsect < (fs->fatbase + fs->fsize)) { /* In FAT area? */
-                        for(nf = fs->n_fats; nf >= 2; nf--) { /* Reflect the change to all FAT copies */
+                if(wsect >= fs->fatbase && wsect < limit) { /* In FAT area? */
+                        /* for(nf = fs->n_fats; nf >= 2; nf--) */
+                        for(nf = 1; nf < fs->n_fats; nf++) { /* Reflect the change to all FAT copies */
                                 wsect += fs->fsize;
                                 DISK_WRITE(fs->drv, fs->win, wsect, 1);
                         }
@@ -2122,20 +2123,22 @@ BYTE check_fs(/* 0:FAT-VBR, 1:Any BR but not FAT, 2:Not a BR, 3:Disk error */
 
 /*-----------------------------------------------------------------------*/
 
+
 static
 FRESULT chk_mounted(/* FR_OK(0): successful, !=0: any error occurred */
         const TCHAR **path, /* Pointer to pointer to the path name (drive number) */
         FATFS **rfs, /* Pointer to pointer to the found file system object */
         BYTE wmode /* !=0: Check write protection for write access */
         ) {
-        BYTE fmt, b, pi, *tbl;
-        UINT vol;
         DSTATUS stat;
-        DWORD bsect, fasize, tsect, sysect, nclst, szbfat;
-        WORD nrsv;
+        UINT vol;
         const TCHAR *p = *path;
         FATFS *fs;
-
+#if  !DO_FULL_MOUNT
+        BYTE fmt, b, pi, *tbl;
+        DWORD bsect, fasize, tsect, sysect, nclst, szbfat;
+        WORD nrsv;
+#endif
 
         /* Get logical drive number from the path name */
         vol = p[0] - '0'; /* Is there a drive number? */
@@ -2170,6 +2173,10 @@ FRESULT chk_mounted(/* FR_OK(0): successful, !=0: any error occurred */
         }
 
         /* The file system object is not valid. */
+
+#if !DO_FULL_MOUNT
+        /* Doesn't this belong in f_mount()? */
+
         /* Following code attempts to mount the volume. (analyze BPB and initialize the fs object) */
 
         fs->fs_type = 0; /* Clear the file system object */
@@ -2280,6 +2287,9 @@ FRESULT chk_mounted(/* FR_OK(0): successful, !=0: any error occurred */
         clear_lock(fs);
 #endif
 
+
+#endif /* DO_FULL_MOUNT */
+
         return FR_OK;
 }
 
@@ -2344,6 +2354,12 @@ FRESULT f_mount(
         ) {
         FATFS *rfs;
 
+#if DO_FULL_MOUNT
+        BYTE fmt, b, pi, *tbl;
+        DSTATUS stat;
+        DWORD bsect, fasize, tsect, sysect, nclst, szbfat;
+        WORD nrsv;
+#endif
 
         if(vol >= _VOLUMES) /* Check if the drive number is valid */
                 return FR_INVALID_DRIVE;
@@ -2366,6 +2382,119 @@ FRESULT f_mount(
 #endif
         }
         FatFs[vol] = fs; /* Register new fs object */
+
+#if DO_FULL_MOUNT
+
+        /* Following code attempts to mount the volume. (analyze BPB and initialize the fs object) */
+        if(fs) {
+                fs->fs_type = 0; /* Clear the file system object */
+                fs->drv = LD2PD(vol); /* Bind the logical drive and a physical drive */
+                stat = DISK_INITIALIZE(fs->drv); /* Initialize the physical drive */
+                if(stat & STA_NOINIT) /* Check if the initialization succeeded */
+                        return FR_NOT_READY; /* Failed to initialize due to no medium or hard error */
+#if _MAX_SS != 512						/* Get disk sector size (variable sector size cfg only) */
+                if(DISK_IOCTL(fs->drv, GET_SECTOR_SIZE, &fs->ssize) != RES_OK)
+                        return FR_DISK_ERR;
+#endif
+                /* Search FAT partition on the drive. Supports only generic partitions, FDISK and SFD. */
+                fmt = check_fs(fs, bsect = 0); /* Load sector 0 and check if it is an FAT-VBR (in SFD) */
+                if(LD2PT(vol) && !fmt) fmt = 1; /* Force non-SFD if the volume is forced partition */
+                if(fmt == 1) { /* Not an FAT-VBR, the physical drive can be partitioned */
+                        /* Check the partition listed in the partition table */
+                        pi = LD2PT(vol);
+                        if(pi) pi--;
+                        tbl = &fs->win[MBR_Table + pi * SZ_PTE]; /* Partition table */
+                        if(tbl[4]) { /* Is the partition existing? */
+                                bsect = LD_DWORD(&tbl[8]); /* Partition offset in LBA */
+                                fmt = check_fs(fs, bsect); /* Check the partition */
+                        }
+                }
+                if(fmt == 3) return FR_DISK_ERR;
+                if(fmt) return FR_NO_FILESYSTEM; /* No FAT volume is found */
+
+                /* An FAT volume is found. Following code initializes the file system object */
+
+                if(LD_WORD(fs->win + BPB_BytsPerSec) != SS(fs)) /* (BPB_BytsPerSec must be equal to the physical sector size) */
+                        return FR_NO_FILESYSTEM;
+
+                fasize = LD_WORD(fs->win + BPB_FATSz16); /* Number of sectors per FAT */
+                if(!fasize) fasize = LD_DWORD(fs->win + BPB_FATSz32);
+                fs->fsize = fasize;
+
+                fs->n_fats = b = fs->win[BPB_NumFATs]; /* Number of FAT copies */
+                if(b != 1 && b != 2) return FR_NO_FILESYSTEM; /* (Must be 1 or 2) */
+                fasize *= b; /* Number of sectors for FAT area */
+
+                fs->csize = b = fs->win[BPB_SecPerClus]; /* Number of sectors per cluster */
+                if(!b || (b & (b - 1))) return FR_NO_FILESYSTEM; /* (Must be power of 2) */
+
+                fs->n_rootdir = LD_WORD(fs->win + BPB_RootEntCnt); /* Number of root directory entries */
+                if(fs->n_rootdir % (SS(fs) / SZ_DIR)) return FR_NO_FILESYSTEM; /* (BPB_RootEntCnt must be sector aligned) */
+
+                tsect = LD_WORD(fs->win + BPB_TotSec16); /* Number of sectors on the volume */
+                if(!tsect) tsect = LD_DWORD(fs->win + BPB_TotSec32);
+
+                nrsv = LD_WORD(fs->win + BPB_RsvdSecCnt); /* Number of reserved sectors */
+                if(!nrsv) return FR_NO_FILESYSTEM; /* (BPB_RsvdSecCnt must not be 0) */
+
+                /* Determine the FAT sub type */
+                sysect = nrsv + fasize + fs->n_rootdir / (SS(fs) / SZ_DIR); /* RSV+FAT+DIR */
+                if(tsect < sysect) return FR_NO_FILESYSTEM; /* (Invalid volume size) */
+                nclst = (tsect - sysect) / fs->csize; /* Number of clusters */
+                if(!nclst) return FR_NO_FILESYSTEM; /* (Invalid volume size) */
+                fmt = FS_FAT12;
+                if(nclst >= MIN_FAT16) fmt = FS_FAT16;
+                if(nclst >= MIN_FAT32) fmt = FS_FAT32;
+
+                /* Boundaries and Limits */
+                fs->n_fatent = nclst + 2; /* Number of FAT entries */
+                fs->volbase = bsect; /* Volume start sector */
+                fs->fatbase = bsect + nrsv; /* FAT start sector */
+                fs->database = bsect + sysect; /* Data start sector */
+                if(fmt == FS_FAT32) {
+                        if(fs->n_rootdir) return FR_NO_FILESYSTEM; /* (BPB_RootEntCnt must be 0) */
+                        fs->dirbase = LD_DWORD(fs->win + BPB_RootClus); /* Root directory start cluster */
+                        szbfat = fs->n_fatent * 4; /* (Required FAT size) */
+                } else {
+                        if(!fs->n_rootdir) return FR_NO_FILESYSTEM; /* (BPB_RootEntCnt must not be 0) */
+                        fs->dirbase = fs->fatbase + fasize; /* Root directory start sector */
+                        szbfat = (fmt == FS_FAT16) ? /* (Required FAT size) */
+                                fs->n_fatent * 2 : fs->n_fatent * 3 / 2 + (fs->n_fatent & 1);
+                }
+                if(fs->fsize < (szbfat + (SS(fs) - 1)) / SS(fs)) /* (BPB_FATSz must not be less than required) */
+                        return FR_NO_FILESYSTEM;
+
+#if !_FS_READONLY
+                /* Initialize cluster allocation information */
+                fs->free_clust = 0xFFFFFFFF;
+                fs->last_clust = 0;
+
+                /* Get fsinfo if available */
+                if(fmt == FS_FAT32) {
+                        fs->fsi_flag = 0;
+                        fs->fsi_sector = bsect + LD_WORD(fs->win + BPB_FSInfo);
+                        if(DISK_READ(fs->drv, fs->win, fs->fsi_sector, 1) == RES_OK &&
+                                LD_WORD(fs->win + BS_55AA) == 0xAA55 &&
+                                LD_DWORD(fs->win + FSI_LeadSig) == 0x41615252 &&
+                                LD_DWORD(fs->win + FSI_StrucSig) == 0x61417272) {
+                                fs->last_clust = LD_DWORD(fs->win + FSI_Nxt_Free);
+                                fs->free_clust = LD_DWORD(fs->win + FSI_Free_Count);
+                        }
+                }
+#endif
+                fs->fs_type = fmt; /* FAT sub-type */
+                fs->id = ++Fsid; /* File system mount ID */
+                fs->winsect = 0; /* Invalidate sector cache */
+                fs->wflag = 0;
+#if _FS_RPATH
+                fs->cdir = 0; /* Current directory (root dir) */
+#endif
+#if _FS_LOCK				/* Clear file lock semaphores */
+                clear_lock(fs);
+#endif
+        }
+
+#endif /* DO_FULL_MOUNT */
 
         return FR_OK;
 }
@@ -2500,7 +2629,8 @@ FRESULT f_open(
                 }
         }
 
-        LEAVE_FF(dj.fs, res);
+       if(res == FR_OK) res = sync_fs(dj.fs);
+       LEAVE_FF(dj.fs, res);
 }
 
 
@@ -2607,6 +2737,11 @@ FRESULT f_read(
 
 
 #if !_FS_READONLY
+
+FRESULT f_sync_fs(FATFS *fs) {
+        return sync_fs(fs);
+}
+
 /*-----------------------------------------------------------------------*/
 /* Write File                                                            */
 
@@ -2762,10 +2897,11 @@ FRESULT f_sync(
                                 ST_WORD(dir + DIR_LstAccDate, 0);
                                 fp->flag &= ~FA__WRITTEN;
                                 fs->wflag = 1;
-                                res = sync_fs(fs);
+                                /* res = sync_fs(fs); */
                         }
                 }
         }
+        if(res == FR_OK) res = sync_fs(fs);
 
         LEAVE_FF(fs, res);
 }
@@ -2811,6 +2947,8 @@ FRESULT f_close(
 #endif
         }
 #endif
+        if(res == FR_OK) res = sync_fs(fp->fs);
+
         if(res == FR_OK) fp->fs = 0; /* Discard file object */
         return res;
 #endif
@@ -3031,7 +3169,8 @@ FRESULT f_lseek(
                         ) ofs = fp->fsize;
 
                 ifptr = fp->fptr;
-                fp->fptr = 0; nsect = 0;
+                fp->fptr = 0;
+                nsect = 0;
                 if(ofs) {
                         bcs = (DWORD) fs->csize * SS(fs); /* Cluster size (byte) */
                         if(ifptr > 0 &&
@@ -3148,6 +3287,7 @@ FRESULT f_opendir(
 
         res = chk_mounted(&path, &dj->fs, 0);
         fs = dj->fs;
+        if(res == FR_OK) res = sync_fs(fs);
         if(res == FR_OK) {
                 INIT_BUF(*dj);
                 res = follow_path(dj, path); /* Follow the path to the directory */
@@ -3322,6 +3462,8 @@ FRESULT f_getfree(
                         if(fat == FS_FAT32) fs->fsi_flag = 1;
                         *nclst = n;
                 }
+                /* Sync here */
+                if(res == FR_OK) res = sync_fs(fs);
         }
         LEAVE_FF(fs, res);
 }
@@ -3386,59 +3528,62 @@ FRESULT f_unlink(
         const TCHAR *path /* Pointer to the file or directory path */
         ) {
         FRESULT res;
-        DIR dj, sdj;
+        DIR dj;
+        DIR sdj;
         BYTE *dir;
         DWORD dclst;
         DEF_NAMEBUF;
 
 
         res = chk_mounted(&path, &dj.fs, 1);
+        INIT_BUF(dj);
         if(res == FR_OK) {
-                INIT_BUF(dj);
                 res = follow_path(&dj, path); /* Follow the file path */
                 if(_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
                         res = FR_INVALID_NAME; /* Cannot remove dot entry */
+        }
+        if(res == FR_OK) { /* The object is accessible */
 #if _FS_LOCK
-                if(res == FR_OK) res = chk_lock(&dj, 2); /* Cannot remove open file */
+                res = chk_lock(&dj, 2); /* Cannot remove open file */
 #endif
-                if(res == FR_OK) { /* The object is accessible */
-                        dir = dj.dir;
-                        if(!dir) {
-                                res = FR_INVALID_NAME; /* Cannot remove the start directory */
+                dir = dj.dir;
+                if(!dir) {
+                        res = FR_INVALID_NAME; /* Cannot remove the start directory */
+                } else {
+                        if(dir[DIR_Attr] & AM_RDO)
+                                res = FR_DENIED; /* Cannot remove R/O object */
+                }
+        }
+        if(res == FR_OK) {
+                dclst = ld_clust(dj.fs, dir);
+                if(res == FR_OK && (dir[DIR_Attr] & AM_DIR)) { /* Is it a sub-dir? */
+                        if(dclst < 2) {
+                                res = FR_INT_ERR;
                         } else {
-                                if(dir[DIR_Attr] & AM_RDO)
-                                        res = FR_DENIED; /* Cannot remove R/O object */
-                        }
-                        dclst = ld_clust(dj.fs, dir);
-                        if(res == FR_OK && (dir[DIR_Attr] & AM_DIR)) { /* Is it a sub-dir? */
-                                if(dclst < 2) {
-                                        res = FR_INT_ERR;
-                                } else {
-                                        mem_cpy(&sdj, &dj, sizeof(DIR)); /* Check if the sub-dir is empty or not */
-                                        sdj.sclust = dclst;
-                                        res = dir_sdi(&sdj, 2); /* Exclude dot entries */
-                                        if(res == FR_OK) {
-                                                res = dir_read(&sdj, 0); /* Read an item */
-                                                if(res == FR_OK /* Not empty dir */
-#if _FS_RPATH
-                                                        || dclst == dj.fs->cdir /* Current dir */
-#endif
-                                                        ) res = FR_DENIED;
-                                                if(res == FR_NO_FILE) res = FR_OK; /* Empty */
-                                        }
-                                }
-                        }
-                        if(res == FR_OK) {
-                                res = dir_remove(&dj); /* Remove the directory entry */
+                                mem_cpy(&sdj, &dj, sizeof(DIR)); /* Check if the sub-dir is empty or not */
+                                sdj.sclust = dclst;
+                                res = dir_sdi(&sdj, 2); /* Exclude dot entries */
                                 if(res == FR_OK) {
-                                        if(dclst) /* Remove the cluster chain if exist */
-                                                res = remove_chain(dj.fs, dclst);
-                                        if(res == FR_OK) res = sync_fs(dj.fs);
+                                        res = dir_read(&sdj, 0); /* Read an item */
+                                        if(res == FR_OK /* Not empty dir */
+#if _FS_RPATH
+                                                || dclst == dj.fs->cdir /* Current dir */
+#endif
+                                                ) res = FR_DENIED;
+                                        if(res == FR_NO_FILE) res = FR_OK; /* Empty */
                                 }
                         }
                 }
-                FREE_BUF();
         }
+        if(res == FR_OK) {
+                res = dir_remove(&dj); /* Remove the directory entry */
+                if(res == FR_OK) {
+                        if(dclst) /* Remove the cluster chain if exist */
+                                res = remove_chain(dj.fs, dclst);
+                        if(res == FR_OK) res = sync_fs(dj.fs);
+                }
+        }
+        FREE_BUF();
 
         LEAVE_FF(dj.fs, res);
 }

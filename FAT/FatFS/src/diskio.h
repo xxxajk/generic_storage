@@ -17,7 +17,6 @@ extern "C" {
 
         /* Status of Disk Functions */
         typedef BYTE DSTATUS;
-
         /* Results of Disk Functions */
         typedef enum {
                 RES_OK = 0, /* 0: Successful */
@@ -25,7 +24,7 @@ extern "C" {
                 RES_WRPRT, /* 2: Write Protected */
                 RES_NOTRDY, /* 3: Not Ready */
                 RES_PARERR /* 4: Invalid Parameter */
-        } DRESULT;
+        } /* __attribute__((packed)) */ DRESULT;
 
 
         /*---------------------------------------*/

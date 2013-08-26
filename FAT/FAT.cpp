@@ -96,7 +96,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
         int i = 0;
         if (lv > _VOLUMES) return FR_INVALID_DRIVE;
         //buf = (uint8_t *)malloc(sto->SectorSize);
-        st = (int)((sto->Read)(first, buf, sto));
+        st = (int)(sto->Read)(first, buf, sto);
         if (!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
                 // verify that the sig is OK.
@@ -109,7 +109,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                         ffs = new FATFS;
                         ffs->pfat = this;
                         volmap = lv;
-                        st = f_mount(volmap, ffs);
+                        st = 0xff & f_mount(volmap, ffs);
                         if (!st) {
                                 if (label != NULL) {
                                         delete label;
@@ -121,7 +121,7 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                                 path[2] = '/';
                                 path[3] = 0x00;
                                 DWORD sn;
-                                int t = f_getlabel(path, lb, &sn);
+                                FRESULT t = f_getlabel(path, lb, &sn);
                                 label = (uint8_t *)(operator new[] (13));
                                         label[0] = '/';
                                         label[1] = 0x00;
