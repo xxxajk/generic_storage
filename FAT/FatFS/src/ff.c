@@ -1294,7 +1294,7 @@ static
 const BYTE
 #ifdef ARDUINO
 /* Work around yet another wonderful array bug, this time in GCC 4.3.2 */
-__attribute__ ((aligned (16)))
+__attribute__ ((aligned (2)))
 #endif
 LfnOfs[] = {1, 3, 5, 7, 9, 14, 16, 18, 20, 22, 24, 28, 30}; /* Offset of LFN chars in the directory entry */
 
