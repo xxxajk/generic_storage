@@ -1291,7 +1291,12 @@ void st_clust(
 /*-----------------------------------------------------------------------*/
 #if _USE_LFN
 static
-const BYTE LfnOfs[] = {1, 3, 5, 7, 9, 14, 16, 18, 20, 22, 24, 28, 30}; /* Offset of LFN chars in the directory entry */
+const BYTE
+#ifdef ARDUINO
+/* Work around yet another wonderful array bug, this time in GCC 4.3.2 */
+__attribute__ ((aligned (16)))
+#endif
+LfnOfs[] = {1, 3, 5, 7, 9, 14, 16, 18, 20, 22, 24, 28, 30}; /* Offset of LFN chars in the directory entry */
 
 static
 int cmp_lfn(/* 1:Matched, 0:Not matched */
@@ -2765,7 +2770,7 @@ FRESULT f_write(
         res = validate(fp); /* Check validity */
         if(res != FR_OK) LEAVE_FF(fs, res);
         if(fp->flag & FA__ERROR) /* Aborted file? */
-                LEAVE_FF(fs, FR_INT_ERR);
+                LEAVE_FF(fs, FR_ABORTED);
         if(!(fp->flag & FA_WRITE)) /* Check access mode */
                 LEAVE_FF(fs, FR_DENIED);
         /* Official patch June 22, 2013 */
@@ -2789,7 +2794,7 @@ FRESULT f_write(
                                                 clst = create_chain(fs, fp->clust); /* Follow or stretch cluster chain on the FAT */
                                 }
                                 if(clst == 0) break; /* Could not allocate a new cluster (disk full) */
-                                if(clst == 1) ABORT(fs, FR_INT_ERR);
+                                if(clst == 1) ABORT(fs, FR_DISK_FULL);
                                 if(clst == 0xFFFFFFFF) ABORT(fs, FR_DISK_ERR);
                                 fp->clust = clst; /* Update current cluster */
                         }
@@ -2804,7 +2809,9 @@ FRESULT f_write(
                         }
 #endif
                         sect = clust2sect(fs, fp->clust); /* Get current sector */
-                        if(!sect) ABORT(fs, FR_INT_ERR);
+                        if(!sect) {
+                                ABORT(fs, FR_INT_ERR);
+                        }
                         sect += csect;
                         cc = btw / SS(fs); /* When remaining bytes >= sector size, */
                         if(cc) { /* Write maximum contiguous sectors directly */

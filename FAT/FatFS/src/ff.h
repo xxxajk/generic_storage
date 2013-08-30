@@ -199,7 +199,10 @@ extern "C" {
                 FR_TOO_MANY_OPEN_FILES, /* (18) Number of open files > _FS_SHARE */
                 FR_INVALID_PARAMETER, /* (19) Given parameter is invalid */
                 FR_EOF, /* (20) end of file reached */
-                FR_EXDEV /* (21) oldpath and newpath are not on the same mounted file system. */
+                FR_EXDEV, /* (21) oldpath and newpath are not on the same mounted file system. */
+                FR_DISK_FULL, /* (22) no clusters left */
+                FR_ABORTED, /* (23) aborted file */
+
         } /* __attribute__((packed)) */ FRESULT;
 
         /*--------------------------------------------------------------*/
