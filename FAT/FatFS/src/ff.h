@@ -21,8 +21,11 @@
 extern "C" {
 #endif
 
-#include "integer.h"	/* Basic integer types */
-#include "ffconf.h"	/* FatFs configuration options */
+#include <FAT/FatFS/src/integer.h>
+#include <FAT/FatFS/src/ffconf.h>
+
+//#include "integer.h"	/* Basic integer types */
+//#include "ffconf.h"	/* FatFs configuration options */
 
 #if _FATFS != _FFCONF
 #error Wrong configuration file (ffconf.h).
@@ -256,9 +259,11 @@ extern "C" {
         /* Additional user defined functions                            */
 
         /* RTC function */
-#if !_FS_READONLY && !defined(GET_FATTIME)
+#if !_FS_READONLY
+#ifndef GET_FATTIME
 #define GET_FATTIME get_fattime
         DWORD get_fattime(void);
+#endif
 #endif
 
         /* Unicode support functions */

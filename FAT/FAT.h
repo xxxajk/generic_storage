@@ -24,9 +24,9 @@
 
 #ifndef FAT_H
 #define	FAT_H
-
-#include <FAT/FatFS/src/ff.h>
+#include <FAT/FatFS/src/ffconf.h>
 #include <FAT/FatFS/src/diskio.h>
+#include <FAT/FatFS/src/ff.h>
 
 #include <Storage.h>
 

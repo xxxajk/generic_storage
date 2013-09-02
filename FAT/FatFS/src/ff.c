@@ -2335,7 +2335,8 @@ FRESULT validate(/* FR_OK(0): The object is valid, !=0: Invalid */
 
 /* Get next available logical drive number, returns _VOLUMES for unavailable  */
 BYTE f_next_mount(void) {
-        for(BYTE i = 0; i < _VOLUMES; i++) {
+        BYTE i;
+        for(i = 0; i < _VOLUMES; i++) {
                 if(!(FatFs[i])) return i;
         }
         return _VOLUMES;

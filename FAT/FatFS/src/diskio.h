@@ -29,6 +29,22 @@ extern "C" {
 
         /*---------------------------------------*/
         /* Prototypes for disk control functions */
+#if _USB_ == 1
+struct PFAT;
+DSTATUS CPP_PFAT_disk_status(struct PFAT*);
+#define DISK_STATUS(a) CPP_PFAT_disk_status(fs->pfat)
+DSTATUS CPP_PFAT_disk_initialize(struct PFAT*);
+#define DISK_INITIALIZE(a) CPP_PFAT_disk_status(fs->pfat)
+DRESULT CPP_PFAT_disk_read(struct PFAT*, BYTE* buff, DWORD sector, BYTE count);
+#define DISK_READ(a,b,c,d) CPP_PFAT_disk_read(fs->pfat,b,c,d)
+DRESULT CPP_PFAT_disk_write(struct PFAT*, const BYTE* buff, DWORD sector, BYTE count);
+#define DISK_WRITE(a,b,c,d) CPP_PFAT_disk_write(fs->pfat,b,c,d)
+DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, BYTE cmd, void* buff);
+#define DISK_IOCTL(a,b,c) CPP_PFAT_disk_ioctl(fs->pfat,b,c)
+DWORD CPP_PFAT_get_fattime(struct PFAT*);
+#define GET_FATTIME() CPP_PFAT_get_fattime(fs->pfat)
+#else
+#define GET_FATTIME get_fattime
 
 #ifndef DISK_INITIALIZE
         DSTATUS disk_initialize(BYTE pdrv);
@@ -49,6 +65,7 @@ extern "C" {
 #ifndef DISK_IOCTL
         DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff);
 #define DISK_IOCTL disk_ioctl
+#endif
 #endif
 
         /* Disk Status Bits (DSTATUS) */
@@ -93,24 +110,6 @@ extern "C" {
 #define CT_BLOCK	0x08		/* Block addressing */
 
 
-#if _USB_ == 1
-struct PFAT;
-DSTATUS CPP_PFAT_disk_status(struct PFAT*);
-#define DISK_STATUS(a) CPP_PFAT_disk_status(fs->pfat)
-DSTATUS CPP_PFAT_disk_initialize(struct PFAT*);
-//#define DISK_INITIALIZE(a) CPP_PFAT_disk_initialize(fs->pfat)
-#define DISK_INITIALIZE(a) CPP_PFAT_disk_status(fs->pfat)
-DRESULT CPP_PFAT_disk_read(struct PFAT*, BYTE* buff, DWORD sector, BYTE count);
-#define DISK_READ(a,b,c,d) CPP_PFAT_disk_read(fs->pfat,b,c,d)
-DRESULT CPP_PFAT_disk_write(struct PFAT*, const BYTE* buff, DWORD sector, BYTE count);
-#define DISK_WRITE(a,b,c,d) CPP_PFAT_disk_write(fs->pfat,b,c,d)
-DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, BYTE cmd, void* buff);
-#define DISK_IOCTL(a,b,c) CPP_PFAT_disk_ioctl(fs->pfat,b,c)
-DWORD CPP_PFAT_get_fattime(struct PFAT*);
-#define GET_FATTIME() CPP_PFAT_get_fattime(fs->pfat)
-#else
-#define GET_FATTIME get_fattime
-#endif
 
 
 
