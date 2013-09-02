@@ -25,6 +25,7 @@
 #include <FAT/FAT.h>
 #include <Storage.h>
 #include <FAT/FatFS/src/diskio.h>
+#include <Wire.h>
 #include <RTClib.h>
 
 
