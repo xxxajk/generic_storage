@@ -46,6 +46,13 @@ typedef struct Storage {
         uint16_t SectorSize; // physical or translated size on the physical media
         uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
         void *private_data; // Anything you need, or nothing at all.
+/*
+public:
+
+        Storage() : Read(NULL), Write(NULL), Reads(NULL), Writes(NULL), Status(NULL),
+        SectorSize(0), TotalSectors(0LU), private_data(NULL) {
+        }
+*/
 } storage_t;
 
 #ifdef _usb_h_
@@ -57,7 +64,7 @@ extern USB Usb;
 extern BulkOnly *Bulk[MAX_USB_MS_DRIVERS];
 
 typedef struct Pvt {
-        uint8_t lun;
+        uint8_t lun; // which LUN
         int B; // which "BulkOnly" instance
 } pvt_t;
 

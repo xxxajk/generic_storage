@@ -25,78 +25,31 @@
 #include <FAT/FAT.h>
 #include <Storage.h>
 #include <FAT/FatFS/src/diskio.h>
-#include <Wire.h>
 #include <RTClib.h>
 
-
-#ifdef RTCLIB_H
-RTC_DS1307 DS1307_RTC;
-RTC_Millis ARDUINO_MILLIS_RTC;
-#endif
-
-#ifndef RTCLIB_H
-
-uint32_t faux_clock() {
-        /*
-        bit31:25 year 33
-        bit24:21 month 1
-        bit20:16 day 1
-        bit15:11 h 0
-        bit10:5 m 0
-        bit4:0 s 0
-
-        3322 2222 2222 1111 1111 11
-        1098 7654 3210 9876 5432 1098 7654 3210
-        YYYY YYYM MMMD DDDD HHHH HMMM MMMS SSSS
-        7654 3210 7654 3210 7654 3210 7654 3210
-        0110 0110 0010 0001 0000 0000 0000 0000
-        8421 8421 8421 8421 8421 8421 8421 8421
-        6    6    2    1    0    0    0    0
-        2013/1/1 00:00:00
-         */
-        return 0x66210000UL;
-
-}
-#else
-
 uint32_t RTClock() {
-        if (DS1307_RTC.isrunning()) return DS1307_RTC.now().FatPacked();
-        return ARDUINO_MILLIS_RTC.now().FatPacked();
-}
-#endif
-
-static boolean WireStarted = false;
-
-PFAT::PFAT() {
-        label = NULL;
-        ffs = NULL;
-#ifndef RTCLIB_H
-        set_clock_call((void *)&faux_clock);
-#else
-        if (!WireStarted) {
-                WireStarted = true;
-                Wire.begin();
-                if (!DS1307_RTC.isrunning())
-                        DS1307_RTC.adjust(DateTime(__DATE__, __TIME__));
-                if (!DS1307_RTC.isrunning())
-                        ARDUINO_MILLIS_RTC.begin(DateTime(__DATE__, __TIME__));
-        }
-        set_clock_call((void*)&RTClock);
-#endif
+        return RTCnow().FatPacked();
 }
 
-int PFAT::Init(storage_t *sto, uint8_t lv) {
-        Init(sto, lv, (uint32_t)0);
+PFAT::PFAT(storage_t *sto, uint8_t lv) {
+        Create(sto, lv, (uint32_t)0);
 }
 
 /* Identify the FAT type. */
-int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
+PFAT::PFAT(storage_t *sto, uint8_t lv, uint32_t first) {
+        Create(sto, lv, first);
+}
+
+void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
+        label = NULL;
+        ffs = NULL;
+
+        set_clock_call((void*)&RTClock);
         uint8_t buf[sto->SectorSize];
         TCHAR lb[256];
         lb[0] = 0x00;
         int i = 0;
-        if (lv > _VOLUMES) return FR_INVALID_DRIVE;
-        //buf = (uint8_t *)malloc(sto->SectorSize);
+        if (lv > _VOLUMES) return;
         st = (int)(sto->Read)(first, buf, sto);
         if (!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
@@ -124,8 +77,8 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                                 DWORD sn;
                                 FRESULT t = f_getlabel(path, lb, &sn);
                                 label = (uint8_t *)(operator new[] (13));
-                                        label[0] = '/';
-                                        label[1] = 0x00;
+                                label[0] = '/';
+                                label[1] = 0x00;
                                 if (!t) {
                                         for (i = 0; lb[i] != 0x00 && i < 12; i++)
                                                 label[i + 1] = lb[i];
@@ -140,8 +93,12 @@ int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
                         }
                 }
         }
+}
+
+int PFAT::Good() {
         return st;
 }
+
 
 /*
     disk_initialize - Initialize disk drive (no need!)
@@ -265,4 +222,79 @@ extern "C" {
         uint32_t CPP_PFAT_get_fattime(PFAT *pfat) {
                 return pfat->get_fattime();
         }
+}
+/**
+ * deprecated
+ */
+PFAT::PFAT() : label(NULL) {
+        ffs = NULL;
+        set_clock_call((void*)&RTClock);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+/**
+ * deprecated
+ */
+int PFAT::Init(storage_t *sto, uint8_t lv) {
+        Init(sto, lv, (uint32_t)0);
+}
+
+/**
+ * deprecated
+ */
+
+/* Identify the FAT type. */
+int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
+        uint8_t buf[sto->SectorSize];
+        TCHAR lb[256];
+        lb[0] = 0x00;
+        int i = 0;
+        if (lv > _VOLUMES) return FR_INVALID_DRIVE;
+        st = (int)(sto->Read)(first, buf, sto);
+        if (!st) {
+                fat_boot_t *BR = (fat_boot_t *)buf;
+                // verify that the sig is OK.
+                if (BR->bootSectorSig0 != 0x55 || BR->bootSectorSig1 != 0xAA) {
+                        //printf_P(PSTR("Bad sig? %02x %02x\r\n"), BR->bootSectorSig0, BR->bootSectorSig1);
+                        st = -1;
+                } else {
+                        Offset = first;
+                        storage = sto;
+                        ffs = new FATFS;
+                        ffs->pfat = this;
+                        volmap = lv;
+                        st = 0xff & f_mount(volmap, ffs);
+                        if (!st) {
+                                if (label != NULL) {
+                                        delete label;
+                                        label = NULL;
+                                }
+                                TCHAR path[4];
+                                path[0] = '0' + lv;
+                                path[1] = ':';
+                                path[2] = '/';
+                                path[3] = 0x00;
+                                DWORD sn;
+                                FRESULT t = f_getlabel(path, lb, &sn);
+                                label = (uint8_t *)(operator new[] (13));
+                                label[0] = '/';
+                                label[1] = 0x00;
+                                if (!t) {
+                                        for (i = 0; lb[i] != 0x00 && i < 12; i++)
+                                                label[i + 1] = lb[i];
+                                        label[i + 1] = 0x00;
+                                        // We will need to convert 'wide' chars, etc? yuck!
+                                        // Life would be a whole lot easier if everything was just UTF-8!
+                                }
+                                //printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
+                        } else {
+                                f_mount(volmap, NULL);
+                                //printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
+                        }
+                }
+        }
+        return st;
 }

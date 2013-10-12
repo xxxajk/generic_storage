@@ -493,7 +493,7 @@ uint8_t const DIR_ATT_DEFINED_BITS = 0X3F;
  * \return true if the entry is for part of a long name else false.
  */
 static inline uint8_t DIR_IS_LONG_NAME(const dir_t* dir) {
-        return (dir->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME;
+        return(dir->attributes & DIR_ATT_LONG_NAME_MASK) == DIR_ATT_LONG_NAME;
 }
 /** Mask for file/subdirectory tests */
 uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
@@ -504,7 +504,7 @@ uint8_t const DIR_ATT_FILE_TYPE_MASK = (DIR_ATT_VOLUME_ID | DIR_ATT_DIRECTORY);
  * \return true if the entry is for a normal file else false.
  */
 static inline uint8_t DIR_IS_FILE(const dir_t* dir) {
-        return (dir->attributes & DIR_ATT_FILE_TYPE_MASK) == 0;
+        return(dir->attributes & DIR_ATT_FILE_TYPE_MASK) == 0;
 }
 
 /** Directory entry is for a subdirectory
@@ -513,7 +513,7 @@ static inline uint8_t DIR_IS_FILE(const dir_t* dir) {
  * \return true if the entry is for a subdirectory else false.
  */
 static inline uint8_t DIR_IS_SUBDIR(const dir_t* dir) {
-        return (dir->attributes & DIR_ATT_FILE_TYPE_MASK) == DIR_ATT_DIRECTORY;
+        return(dir->attributes & DIR_ATT_FILE_TYPE_MASK) == DIR_ATT_DIRECTORY;
 }
 
 /** Directory entry is for a file or subdirectory
@@ -522,14 +522,20 @@ static inline uint8_t DIR_IS_SUBDIR(const dir_t* dir) {
  * \return true if the entry is for a normal file or subdirectory else false.
  */
 static inline uint8_t DIR_IS_FILE_OR_SUBDIR(const dir_t* dir) {
-        return (dir->attributes & DIR_ATT_VOLUME_ID) == 0;
+        return(dir->attributes & DIR_ATT_VOLUME_ID) == 0;
 }
 
 class PFAT {
 public:
-        PFAT();
-        int Init(storage_t *sto, uint8_t lv);
-        int Init(storage_t *sto, uint8_t lv, uint32_t first);
+        PFAT(storage_t *sto, uint8_t lv);
+        PFAT(storage_t *sto, uint8_t lv, uint32_t first);
+        void Create(storage_t *sto, uint8_t lv, uint32_t first);
+        int Good();
+
+        PFAT(); // deprecated
+        int Init(storage_t *sto, uint8_t lv); // deprecated
+        int Init(storage_t *sto, uint8_t lv, uint32_t first); // deprecated
+
         // read/write a sector, zero based, offset is automatically added.
         int ReadSector(uint32_t, uint8_t *);
         int WriteSector(uint32_t, uint8_t *);
