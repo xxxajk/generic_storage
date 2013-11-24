@@ -16,7 +16,7 @@ extern "C" {
 #endif
 
         /* Status of Disk Functions */
-        typedef BYTE DSTATUS;
+        typedef FBYTE DSTATUS;
         /* Results of Disk Functions */
         typedef enum {
                 RES_OK = 0, /* 0: Successful */
@@ -35,11 +35,11 @@ DSTATUS CPP_PFAT_disk_status(struct PFAT*);
 #define DISK_STATUS(a) CPP_PFAT_disk_status(fs->pfat)
 DSTATUS CPP_PFAT_disk_initialize(struct PFAT*);
 #define DISK_INITIALIZE(a) CPP_PFAT_disk_status(fs->pfat)
-DRESULT CPP_PFAT_disk_read(struct PFAT*, BYTE* buff, DWORD sector, BYTE count);
+DRESULT CPP_PFAT_disk_read(struct PFAT*, FBYTE* buff, DWORD sector, FBYTE count);
 #define DISK_READ(a,b,c,d) CPP_PFAT_disk_read(fs->pfat,b,c,d)
-DRESULT CPP_PFAT_disk_write(struct PFAT*, const BYTE* buff, DWORD sector, BYTE count);
+DRESULT CPP_PFAT_disk_write(struct PFAT*, const FBYTE* buff, DWORD sector, FBYTE count);
 #define DISK_WRITE(a,b,c,d) CPP_PFAT_disk_write(fs->pfat,b,c,d)
-DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, BYTE cmd, void* buff);
+DRESULT CPP_PFAT_disk_ioctl(struct PFAT*, FBYTE cmd, void* buff);
 #define DISK_IOCTL(a,b,c) CPP_PFAT_disk_ioctl(fs->pfat,b,c)
 DWORD CPP_PFAT_get_fattime(struct PFAT*);
 #define GET_FATTIME() CPP_PFAT_get_fattime(fs->pfat)
@@ -47,23 +47,23 @@ DWORD CPP_PFAT_get_fattime(struct PFAT*);
 #define GET_FATTIME get_fattime
 
 #ifndef DISK_INITIALIZE
-        DSTATUS disk_initialize(BYTE pdrv);
+        DSTATUS disk_initialize(FBYTE pdrv);
 #define DISK_INITIALIZE disk_initialize
 #endif
 #ifndef DISK_STATUS
-        DSTATUS disk_status(BYTE pdrv);
+        DSTATUS disk_status(FBYTE pdrv);
 #define DISK_STATUS disk_status
 #endif
 #ifndef DISK_READ
-        DRESULT disk_read(BYTE pdrv, BYTE*buff, DWORD sector, BYTE count);
+        DRESULT disk_read(FBYTE pdrv, FBYTE*buff, DWORD sector, FBYTE count);
 #define DISK_READ disk_read
 #endif
 #ifndef DISK_WRITE
-        DRESULT disk_write(BYTE pdrv, const BYTE* buff, DWORD sector, BYTE count);
+        DRESULT disk_write(FBYTE pdrv, const FBYTE* buff, DWORD sector, FBYTE count);
 #define DISK_WRITE disk_write
 #endif
 #ifndef DISK_IOCTL
-        DRESULT disk_ioctl(BYTE pdrv, BYTE cmd, void* buff);
+        DRESULT disk_ioctl(FBYTE pdrv, FBYTE cmd, void* buff);
 #define DISK_IOCTL disk_ioctl
 #endif
 #endif

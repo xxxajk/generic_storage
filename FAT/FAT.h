@@ -546,9 +546,9 @@ public:
         uint32_t get_fattime();
         DSTATUS disk_initialize();
         DSTATUS disk_status();
-        DRESULT disk_read(BYTE *, DWORD, BYTE);
-        DRESULT disk_write(const BYTE *, DWORD, BYTE);
-        DRESULT disk_ioctl(BYTE, void *);
+        DRESULT disk_read(FBYTE *, DWORD, FBYTE);
+        DRESULT disk_write(const FBYTE *, DWORD, FBYTE);
+        DRESULT disk_ioctl(FBYTE, void *);
         storage_t *storage;
         FATFS *ffs;
         uint8_t *label; // Volume label NULL for /

@@ -186,7 +186,7 @@
 /*---------------------------------------------------------------------------/
 / System Configurations
 /----------------------------------------------------------------------------*/
-#if defined(AVR)
+#if defined(AVR) || defined(memcpy_P)
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #define _TABLES_IN_PGMSPACE 1

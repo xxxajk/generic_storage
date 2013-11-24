@@ -11,7 +11,7 @@
 #include <stdlib.h>		/* ANSI memory controls */
 #include <malloc.h>		/* ANSI memory controls */
 /*------------------------------------------------------------------------*/
-/* Create a Synchronization Object
+/ Create a Synchronization Object
 /*------------------------------------------------------------------------*/
 
 /* This function is called in f_mount function to create a new
@@ -20,7 +20,7 @@
  */
 
 int ff_cre_syncobj(/* 1:Function succeeded, 0:Could not create due to any error */
-        BYTE vol, /* Corresponding logical drive being processed */
+        FBYTE vol, /* Corresponding logical drive being processed */
         _SYNC_t *sobj /* Pointer to return the created sync object */
         ) {
         int ret;

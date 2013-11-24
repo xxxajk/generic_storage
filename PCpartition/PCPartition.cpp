@@ -45,7 +45,7 @@ int PCPartition::Init(storage_t *sto) {
                         // verify that the partition sig is OK.
                         // Anything else needs to be checked by the file system.
                         if (MBR->mbrSig0 != 0x55 || MBR->mbrSig1 != 0xAA) {
-                                printf_P(PSTR("Bad sig? %02x %02x\r\n"), MBR->mbrSig0, MBR->mbrSig1);
+                                //printf_P(PSTR("Bad sig? %02x %02x\r\n"), MBR->mbrSig0, MBR->mbrSig1);
                                 st = -1;
                         } else {
                                 // Problem... partition seg and MBR sig are identical?!

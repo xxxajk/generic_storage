@@ -118,19 +118,19 @@ DSTATUS PFAT::disk_status(void) {
         return STA_PROTECT;
 }
 
-DRESULT PFAT::disk_read(BYTE *buff, DWORD sector, BYTE count) {
+DRESULT PFAT::disk_read(FBYTE *buff, DWORD sector, FBYTE count) {
         int rc = storage->Reads(sector, (uint8_t*)buff, storage, count);
         if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
-DRESULT PFAT::disk_write(const BYTE *buff, DWORD sector, BYTE count) {
+DRESULT PFAT::disk_write(const FBYTE *buff, DWORD sector, FBYTE count) {
         int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
         if (rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
-DRESULT PFAT::disk_ioctl(BYTE cmd, void* buff) {
+DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
         switch (cmd) {
                 case CTRL_SYNC:
                         break;
@@ -207,15 +207,15 @@ extern "C" {
                 return pfat->disk_status();
         }
 
-        DRESULT CPP_PFAT_disk_read(PFAT *pfat, BYTE *buff, DWORD sector, BYTE count) {
+        DRESULT CPP_PFAT_disk_read(PFAT *pfat, FBYTE *buff, DWORD sector, FBYTE count) {
                 return pfat->disk_read(buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_write(PFAT *pfat, const BYTE *buff, DWORD sector, BYTE count) {
+        DRESULT CPP_PFAT_disk_write(PFAT *pfat, const FBYTE *buff, DWORD sector, FBYTE count) {
                 return pfat->disk_write(buff, sector, count);
         }
 
-        DRESULT CPP_PFAT_disk_ioctl(PFAT *pfat, BYTE cmd, void *buff) {
+        DRESULT CPP_PFAT_disk_ioctl(PFAT *pfat, FBYTE cmd, void *buff) {
                 return pfat->disk_ioctl(cmd, buff);
         }
 
@@ -239,7 +239,7 @@ PFAT::PFAT() : label(NULL) {
  * deprecated
  */
 int PFAT::Init(storage_t *sto, uint8_t lv) {
-        Init(sto, lv, (uint32_t)0);
+        return Init(sto, lv, (uint32_t)0);
 }
 
 /**

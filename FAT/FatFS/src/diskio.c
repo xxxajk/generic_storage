@@ -24,7 +24,7 @@
 /*-----------------------------------------------------------------------*/
 
 DSTATUS disk_initialize(
-        BYTE pdrv /* Physical drive nmuber (0..) */
+        FBYTE pdrv /* Physical drive nmuber (0..) */
         ) {
         DSTATUS stat;
         int result;
@@ -62,7 +62,7 @@ DSTATUS disk_initialize(
 /*-----------------------------------------------------------------------*/
 
 DSTATUS disk_status(
-        BYTE pdrv /* Physical drive nmuber (0..) */
+        FBYTE pdrv /* Physical drive nmuber (0..) */
         ) {
         DSTATUS stat;
         int result;
@@ -100,10 +100,10 @@ DSTATUS disk_status(
 /*-----------------------------------------------------------------------*/
 
 DRESULT DISK_READ(
-        BYTE pdrv, /* Physical drive nmuber (0..) */
-        BYTE *buff, /* Data buffer to store read data */
+        FBYTE pdrv, /* Physical drive nmuber (0..) */
+        FBYTE *buff, /* Data buffer to store read data */
         DWORD sector, /* Sector address (LBA) */
-        BYTE count /* Number of sectors to read (1..128) */
+        FBYTE count /* Number of sectors to read (1..128) */
         ) {
         DRESULT res;
         int result;
@@ -148,10 +148,10 @@ DRESULT DISK_READ(
 #if _USE_WRITE
 
 DRESULT DISK_WRITE(
-        BYTE pdrv, /* Physical drive nmuber (0..) */
-        const BYTE *buff, /* Data to be written */
+        FBYTE pdrv, /* Physical drive nmuber (0..) */
+        const FBYTE *buff, /* Data to be written */
         DWORD sector, /* Sector address (LBA) */
-        BYTE count /* Number of sectors to write (1..128) */
+        FBYTE count /* Number of sectors to write (1..128) */
         ) {
         DRESULT res;
         int result;
@@ -196,8 +196,8 @@ DRESULT DISK_WRITE(
 #if _USE_IOCTL
 
 DRESULT DISK_IOCTL(
-        BYTE pdrv, /* Physical drive nmuber (0..) */
-        BYTE cmd, /* Control code */
+        FBYTE pdrv, /* Physical drive nmuber (0..) */
+        FBYTE cmd, /* Control code */
         void *buff /* Buffer to send/receive control data */
         ) {
         DRESULT res;
