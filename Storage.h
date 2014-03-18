@@ -7,17 +7,18 @@
 
 #ifndef STORAGE_H
 #define	STORAGE_H
+#include <FAT/FatFS/src/diskio.h>
 
 #ifndef MAX_USB_MS_DRIVERS
 #define MAX_USB_MS_DRIVERS 1 // must be 1 to 4
 #endif
 
+#ifndef FAT_MAX_ERROR_RETRIES
+#define FAT_MAX_ERROR_RETRIES 10
+#endif
+
 /*
  * Notes:
- * Read and Write do not care about sector counts, or how many to read.
- * The passed method needs to just read and write one full sector.
- * Reads and Writes are for multiple sectors.
- *
  * In order to assist these calls, a pointer to the Storage struct is also passed,
  * so that your driver can get at its own private information, if used.
  * The private_data pointer can point to anything that you need for your driver,
@@ -33,49 +34,59 @@
  * Errors should return a non-Zero integer meaningful to the storage caller.
  * Negative One is returned by this layer to indicate some other error.
  *
- *
  */
 
 
 typedef struct Storage {
-        int (*Read)(uint32_t, uint8_t *, struct Storage *); // single sector read
-        int (*Write)(uint32_t, uint8_t *, struct Storage *); // single sector write
         int (*Reads)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector read
         int (*Writes)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector write
         bool (*Status)(struct Storage *);
+        DSTATUS (*Initialize)(struct Storage *);
         uint16_t SectorSize; // physical or translated size on the physical media
         uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
         void *private_data; // Anything you need, or nothing at all.
-/*
-public:
-
-        Storage() : Read(NULL), Write(NULL), Reads(NULL), Writes(NULL), Status(NULL),
-        SectorSize(0), TotalSectors(0LU), private_data(NULL) {
-        }
-*/
 } storage_t;
 
 #ifdef _usb_h_
 
 extern USB Usb;
 
-#define FAT_MAX_ERROR_RETRIES 10
-
-extern BulkOnly *Bulk[MAX_USB_MS_DRIVERS];
+extern BulkOnly *UHS_USB_BulkOnly[MAX_USB_MS_DRIVERS];
 
 typedef struct Pvt {
         uint8_t lun; // which LUN
         int B; // which "BulkOnly" instance
 } pvt_t;
 
-void InitStorage(void);
-bool PStatus(storage_t *sto);
-int PRead(uint32_t LBA, uint8_t *buf, storage_t *sto);
-int PWrite(uint32_t LBA, uint8_t *buf, storage_t *sto);
-int PReads(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
-int PWrites(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
+bool UHS_USB_BulkOnly_Status(storage_t *sto);
+DSTATUS UHS_USB_BulkOnly_Initialize(storage_t *sto);
+int UHS_USB_BulkOnly_Read(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
+int UHS_USB_BulkOnly_Write(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
 #endif
-// Your stuff here...
+
+// Your driver interface(s) go here...
+
+
+#if 0
+
+// TO-DO: abstract to allow multiple interfaces at once, e.g. SD on SPI and USB
+
+// TO-DO: cache writes.
+
+// Current Problem: read/write can be multiple sector.
+
+// This structure will be used to cache writes.
+// The idea is to coalesce writes so that media wear is lessened.
+typedef struct storage_cache {
+        uint8_t *buf; // One sector of data
+        pvt_t private_data;
+        uint32_t LBA; // LBA
+} storage_cache_t;
+
+extern storage_cache_t *Cache;
+#endif
+
+// Initialize every sub-system
+void Init_Generic_Storage(void);
 
 #endif	/* STORAGE_H */
-

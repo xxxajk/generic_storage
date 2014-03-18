@@ -530,15 +530,15 @@ public:
         PFAT(storage_t *sto, uint8_t lv);
         PFAT(storage_t *sto, uint8_t lv, uint32_t first);
         void Create(storage_t *sto, uint8_t lv, uint32_t first);
-        int Good();
+        int MountStatus();
 
-        PFAT(); // deprecated
-        int Init(storage_t *sto, uint8_t lv); // deprecated
-        int Init(storage_t *sto, uint8_t lv, uint32_t first); // deprecated
+        //PFAT(); // deprecated
+        //int Init(storage_t *sto, uint8_t lv); // deprecated
+        //int Init(storage_t *sto, uint8_t lv, uint32_t first); // deprecated
 
         // read/write a sector, zero based, offset is automatically added.
-        int ReadSector(uint32_t, uint8_t *);
-        int WriteSector(uint32_t, uint8_t *);
+        //int ReadSector(uint32_t, uint8_t *);
+        //int WriteSector(uint32_t, uint8_t *);
         int ReadSectors(uint32_t, uint8_t *, uint8_t);
         int WriteSectors(uint32_t, uint8_t *, uint8_t);
         virtual ~PFAT();

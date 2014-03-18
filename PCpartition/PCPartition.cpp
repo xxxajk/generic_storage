@@ -39,7 +39,7 @@ int PCPartition::Init(storage_t *sto) {
                 // WARNING, CAN FAIL! this requires _MAX_SS stack space.
                 uint8_t buf[sto->SectorSize];
 #endif
-                st = (int)((sto->Read)(0, buf, sto));
+                st = (int)((sto->Reads)(0, buf, sto,1));
                 if (!st) {
                         mbr_t *MBR = (mbr_t *)buf;
                         // verify that the partition sig is OK.

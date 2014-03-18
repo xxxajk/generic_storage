@@ -25,8 +25,8 @@ extern "C" {
 #include <FAT/FatFS/src/ffconf.h>
 #include <FAT/FatFS/src/diskio.h>
 
-//#include "integer.h"	/* Basic integer types */
-//#include "ffconf.h"	/* FatFs configuration options */
+#include <stdlib.h>
+#include <string.h>
 
 #if _FATFS != _FFCONF
 #error Wrong configuration file (ffconf.h).
@@ -272,10 +272,15 @@ extern "C" {
         WCHAR ff_convert(WCHAR chr, UINT dir); /* OEM-Unicode bidirectional conversion */
         WCHAR ff_wtoupper(WCHAR chr); /* Unicode upper-case conversion */
 #endif
+
+#if __GNUC__
+#define ff_memalloc(x) malloc(x)
+#define ff_memfree(x) free(x)
+#else
         /* Memory functions */
         void* ff_memalloc(UINT msize); /* Allocate memory block */
         void ff_memfree(void* mblock); /* Free memory block */
-
+#endif
         /* Sync functions */
 #if _FS_REENTRANT
         int ff_cre_syncobj(FBYTE vol, _SYNC_t* sobj); /* Create a sync object */
@@ -293,10 +298,8 @@ extern "C" {
 
         /* File access control and file status flags (FIL.flag) */
 
-#define	FA_READ			0x01
 #define	FA_OPEN_EXISTING	0x00
-#define FA__ERROR		0x80
-
+#define	FA_READ			0x01
 #if !_FS_READONLY
 #define	FA_WRITE		0x02
 #define	FA_CREATE_NEW		0x04
@@ -305,6 +308,7 @@ extern "C" {
 #define FA__WRITTEN		0x20
 #define FA__DIRTY		0x40
 #endif
+#define FA__ERROR		0x80
 
 
         /* FAT sub type (FATFS.fs_type) */

@@ -8,8 +8,8 @@
 
 
 #if _FS_REENTRANT
-#include <stdlib.h>		/* ANSI memory controls */
-#include <malloc.h>		/* ANSI memory controls */
+/* Stupidity follows, this should be using known compiler/header definitions. */
+
 /*------------------------------------------------------------------------*/
 / Create a Synchronization Object
 /*------------------------------------------------------------------------*/
@@ -125,7 +125,8 @@ void ff_rel_grant(
 
 
 
-
+#ifndef __GNUC__
+/* Bogus cruft */
 /*------------------------------------------------------------------------*/
 /* Allocate a memory block                                                */
 /*------------------------------------------------------------------------*/
@@ -151,3 +152,4 @@ void ff_memfree(
         free(mblock);
 }
 
+#endif

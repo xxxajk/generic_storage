@@ -50,7 +50,7 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
         lb[0] = 0x00;
         int i = 0;
         if (lv > _VOLUMES) return;
-        st = (int)(sto->Read)(first, buf, sto);
+        st = (int)(sto->Reads)(first, buf, sto, 1);
         if (!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
                 // verify that the sig is OK.
@@ -88,6 +88,7 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
                                 }
                                 //printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
                         } else {
+                                // Unmount it
                                 f_mount(volmap, NULL);
                                 //printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
                         }
@@ -95,13 +96,13 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
         }
 }
 
-int PFAT::Good() {
+int PFAT::MountStatus() {
         return st;
 }
 
 
 /*
-    disk_initialize - Initialize disk drive (no need!)
+    disk_initialize - Initialize disk drive (no need for most devices!)
     disk_status - Get disk status
     disk_read - Read sector(s)
     disk_write - Write sector(s)
@@ -109,7 +110,7 @@ int PFAT::Good() {
     get_fattime - Get current time
  */
 DSTATUS PFAT::disk_initialize(void) {
-        return disk_status();
+        return (storage->Initialize(storage));
 }
 
 DSTATUS PFAT::disk_status(void) {
@@ -163,16 +164,6 @@ void disk_timerproc(void) {
         /* Nothing to do */
 }
 
-int PFAT::ReadSector(uint32_t sector, uint8_t *buf) {
-
-        return storage->Read(Offset + sector, buf, storage);
-}
-
-int PFAT::WriteSector(uint32_t sector, uint8_t *buf) {
-
-        return storage->Write(Offset + sector, buf, storage);
-}
-
 int PFAT::ReadSectors(uint32_t sector, uint8_t *buf, uint8_t count) {
 
         return storage->Reads(Offset + sector, buf, storage, count);
@@ -222,79 +213,4 @@ extern "C" {
         uint32_t CPP_PFAT_get_fattime(PFAT *pfat) {
                 return pfat->get_fattime();
         }
-}
-/**
- * deprecated
- */
-PFAT::PFAT() : label(NULL) {
-        ffs = NULL;
-        set_clock_call((void*)&RTClock);
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-/**
- * deprecated
- */
-int PFAT::Init(storage_t *sto, uint8_t lv) {
-        return Init(sto, lv, (uint32_t)0);
-}
-
-/**
- * deprecated
- */
-
-/* Identify the FAT type. */
-int PFAT::Init(storage_t *sto, uint8_t lv, uint32_t first) {
-        uint8_t buf[sto->SectorSize];
-        TCHAR lb[256];
-        lb[0] = 0x00;
-        int i = 0;
-        if (lv > _VOLUMES) return FR_INVALID_DRIVE;
-        st = (int)(sto->Read)(first, buf, sto);
-        if (!st) {
-                fat_boot_t *BR = (fat_boot_t *)buf;
-                // verify that the sig is OK.
-                if (BR->bootSectorSig0 != 0x55 || BR->bootSectorSig1 != 0xAA) {
-                        //printf_P(PSTR("Bad sig? %02x %02x\r\n"), BR->bootSectorSig0, BR->bootSectorSig1);
-                        st = -1;
-                } else {
-                        Offset = first;
-                        storage = sto;
-                        ffs = new FATFS;
-                        ffs->pfat = this;
-                        volmap = lv;
-                        st = 0xff & f_mount(volmap, ffs);
-                        if (!st) {
-                                if (label != NULL) {
-                                        delete label;
-                                        label = NULL;
-                                }
-                                TCHAR path[4];
-                                path[0] = '0' + lv;
-                                path[1] = ':';
-                                path[2] = '/';
-                                path[3] = 0x00;
-                                DWORD sn;
-                                FRESULT t = f_getlabel(path, lb, &sn);
-                                label = (uint8_t *)(operator new[] (13));
-                                label[0] = '/';
-                                label[1] = 0x00;
-                                if (!t) {
-                                        for (i = 0; lb[i] != 0x00 && i < 12; i++)
-                                                label[i + 1] = lb[i];
-                                        label[i + 1] = 0x00;
-                                        // We will need to convert 'wide' chars, etc? yuck!
-                                        // Life would be a whole lot easier if everything was just UTF-8!
-                                }
-                                //printf_P(PSTR("VOLUME %i @ '%s'\r\n"), volmap, &label[0]);
-                        } else {
-                                f_mount(volmap, NULL);
-                                //printf_P(PSTR("Mount failed %i(%x)\r\n"), st, st);
-                        }
-                }
-        }
-        return st;
 }

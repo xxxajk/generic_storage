@@ -128,12 +128,14 @@
 /   862  - Hebrew (OEM)
 /   874  - Thai (OEM, Windows)
 /   1    - ASCII only (Valid for non LFN cfg.)
+/ TO-DO: add 65001 - UTF-8
  */
 #endif
 
-#define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode (UTF-8) */
+#define	_LFN_UNICODE	0	/* 0:ANSI/OEM or 1:Unicode 2: UTF-8 */
 /* To switch the character code set on FatFs API to Unicode,
-/  enable LFN feature and set _LFN_UNICODE to 1. */
+/  enable LFN feature and set _LFN_UNICODE to 1.
+ */
 
 
 #define _FS_RPATH	2	/* 0 to 2 */
@@ -186,7 +188,7 @@
 /*---------------------------------------------------------------------------/
 / System Configurations
 /----------------------------------------------------------------------------*/
-#if defined(AVR) || defined(memcpy_P)
+#if defined(__AVR__) || defined(memcpy_P)
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #define _TABLES_IN_PGMSPACE 1
@@ -211,7 +213,7 @@
 
 /* on most arduino, it's LE, 'cept a few... */
 #ifndef _WORD_ACCESS
-#if defined(AVR)
+#if defined(__AVR__) || defined(__ARM__)
 #define _WORD_ACCESS	1	/* 0 or 1 */
 #else
 #define _WORD_ACCESS	0	/* 0 or 1 */
@@ -236,6 +238,7 @@
 
 #define _FS_REENTRANT           0	/* 0:Disable or 1:Enable */
 #define _FS_TIMEOUT		1000	/* Timeout period in unit of time ticks */
+/* Stupid, this should use #ifdefs... */
 #define	_SYNC_t			HANDLE	/* O/S dependent type of sync object. e.g. HANDLE, OS_EVENT*, ID and etc.. */
 
 /* The _FS_REENTRANT option switches the reentrancy (thread safe) of the FatFs module.
