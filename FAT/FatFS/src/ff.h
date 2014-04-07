@@ -244,6 +244,8 @@ extern "C" {
         int f_printf(FIL* fp, const TCHAR* str, ...); /* Put a formatted string to the file */
         TCHAR* f_gets(TCHAR* buff, int len, FIL* fp); /* Get a string from the file */
         FRESULT f_sync_fs(FATFS *fs);
+        FRESULT commit_fs(FATFS *fs);
+
 #define f_eof(fp) (((fp)->fptr == (fp)->fsize) ? 1 : 0)
 #define f_error(fp) (((fp)->flag & FA__ERROR) ? 1 : 0)
 #define f_tell(fp) ((fp)->fptr)

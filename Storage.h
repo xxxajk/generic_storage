@@ -42,10 +42,18 @@ typedef struct Storage {
         int (*Writes)(uint32_t, uint8_t *, struct Storage *, uint8_t); // multiple sector write
         bool (*Status)(struct Storage *);
         DSTATUS (*Initialize)(struct Storage *);
+        uint8_t (*Commit)(struct Storage *);
         uint16_t SectorSize; // physical or translated size on the physical media
         uint32_t TotalSectors; // Total sector count. Used to guard against illegal access.
         void *private_data; // Anything you need, or nothing at all.
 } storage_t;
+
+#if defined(USE_MULTIPLE_APP_API)
+#include <xmem.h>
+#define STORAGE_HAS_MEDIA_CACHE 1
+#else
+#define STORAGE_HAS_MEDIA_CACHE 0
+#endif
 
 #ifdef _usb_h_
 
@@ -62,28 +70,25 @@ bool UHS_USB_BulkOnly_Status(storage_t *sto);
 DSTATUS UHS_USB_BulkOnly_Initialize(storage_t *sto);
 int UHS_USB_BulkOnly_Read(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
 int UHS_USB_BulkOnly_Write(uint32_t LBA, uint8_t *buf, storage_t *sto, uint8_t count);
+uint8_t UHS_USB_BulkOnly_Commit(storage_t *sto);
 #endif
 
 // Your driver interface(s) go here...
 
 
-#if 0
-
 // TO-DO: abstract to allow multiple interfaces at once, e.g. SD on SPI and USB
 
-// TO-DO: cache writes.
+// TO-DO: cache reads.
+#if STORAGE_HAS_MEDIA_CACHE
 
-// Current Problem: read/write can be multiple sector.
-
-// This structure will be used to cache writes.
+// This structure is used to cache writes.
 // The idea is to coalesce writes so that media wear is lessened.
 typedef struct storage_cache {
         uint8_t *buf; // One sector of data
-        pvt_t private_data;
+        storage_t *sto; // NULL if free
         uint32_t LBA; // LBA
+        //uint16_t cache_ticker;
 } storage_cache_t;
-
-extern storage_cache_t *Cache;
 #endif
 
 // Initialize every sub-system

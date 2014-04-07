@@ -49,12 +49,12 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
         TCHAR lb[256];
         lb[0] = 0x00;
         int i = 0;
-        if (lv > _VOLUMES) return;
+        if(lv > _VOLUMES) return;
         st = (int)(sto->Reads)(first, buf, sto, 1);
-        if (!st) {
+        if(!st) {
                 fat_boot_t *BR = (fat_boot_t *)buf;
                 // verify that the sig is OK.
-                if (BR->bootSectorSig0 != 0x55 || BR->bootSectorSig1 != 0xAA) {
+                if(BR->bootSectorSig0 != 0x55 || BR->bootSectorSig1 != 0xAA) {
                         //printf_P(PSTR("Bad sig? %02x %02x\r\n"), BR->bootSectorSig0, BR->bootSectorSig1);
                         st = -1;
                 } else {
@@ -64,8 +64,8 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
                         ffs->pfat = this;
                         volmap = lv;
                         st = 0xff & f_mount(volmap, ffs);
-                        if (!st) {
-                                if (label != NULL) {
+                        if(!st) {
+                                if(label != NULL) {
                                         delete label;
                                         label = NULL;
                                 }
@@ -79,8 +79,8 @@ void PFAT::Create(storage_t *sto, uint8_t lv, uint32_t first) {
                                 label = (uint8_t *)(operator new[] (13));
                                 label[0] = '/';
                                 label[1] = 0x00;
-                                if (!t) {
-                                        for (i = 0; lb[i] != 0x00 && i < 12; i++)
+                                if(!t) {
+                                        for(i = 0; lb[i] != 0x00 && i < 12; i++)
                                                 label[i + 1] = lb[i];
                                         label[i + 1] = 0x00;
                                         // We will need to convert 'wide' chars, etc? yuck!
@@ -100,7 +100,6 @@ int PFAT::MountStatus() {
         return st;
 }
 
-
 /*
     disk_initialize - Initialize disk drive (no need for most devices!)
     disk_status - Get disk status
@@ -115,24 +114,24 @@ DSTATUS PFAT::disk_initialize(void) {
 
 DSTATUS PFAT::disk_status(void) {
         bool rc = storage->Status(storage);
-        if (rc) return RES_OK;
+        if(rc) return STA_OK;
         return STA_PROTECT;
 }
 
 DRESULT PFAT::disk_read(FBYTE *buff, DWORD sector, FBYTE count) {
         int rc = storage->Reads(sector, (uint8_t*)buff, storage, count);
-        if (rc == 0) return RES_OK;
+        if(rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
 DRESULT PFAT::disk_write(const FBYTE *buff, DWORD sector, FBYTE count) {
         int rc = storage->Writes(sector, (uint8_t*)buff, storage, count);
-        if (rc == 0) return RES_OK;
+        if(rc == 0) return RES_OK;
         return RES_ERROR;
 }
 
 DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
-        switch (cmd) {
+        switch(cmd) {
                 case CTRL_SYNC:
                         break;
                 case GET_SECTOR_COUNT:
@@ -141,7 +140,34 @@ DRESULT PFAT::disk_ioctl(FBYTE cmd, void* buff) {
                 case GET_SECTOR_SIZE:
                         *(WORD*)buff = storage->SectorSize;
                         break;
-                        //case CTRL_ERASE_SECTOR:
+                case CTRL_COMMIT:
+                        if(!storage->Status(storage)) return RES_WRPRT;
+                        if(storage->Commit(storage)) return RES_ERROR;
+                        break;
+                case CTRL_EJECT:
+                        switch(*(int*)buff) {
+                                case 0:
+
+                                        if(ffs != NULL) {
+                                                if(!storage->Status(storage)) {
+                                                   storage->Commit(storage);
+                                                }
+                                                f_mount(volmap, NULL);
+                                                delete ffs;
+                                                ffs = NULL;
+                                        }
+                                        if(label != NULL) {
+                                                delete label;
+                                                label = NULL;
+                                        }
+                                        break;
+                                default:
+                                        // mount
+                                        if(ffs != NULL) break;
+                                        Create(storage, volmap, Offset);
+                                        break;
+                        }
+                        break;
                 default:
                         return RES_PARERR;
         }
@@ -175,13 +201,13 @@ int PFAT::WriteSectors(uint32_t sector, uint8_t *buf, uint8_t count) {
 }
 
 PFAT::~PFAT() {
-        if (ffs != NULL) {
+        if(ffs != NULL) {
                 f_mount(volmap, NULL);
                 delete ffs;
                 ffs = NULL;
         }
 
-        if (label != NULL) {
+        if(label != NULL) {
                 delete label;
                 label = NULL;
         }

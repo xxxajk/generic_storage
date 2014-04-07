@@ -856,6 +856,10 @@ static FRESULT sync_fs(FATFS *fs) {
 
         return res;
 }
+
+FRESULT commit_fs(FATFS *fs) {
+        return(DISK_IOCTL(fs->drv, CTRL_COMMIT, 0));
+}
 #endif
 
 
@@ -2632,7 +2636,6 @@ FRESULT f_open(FIL *fp, const TCHAR *path, FBYTE mode) {
                         fp->id = dj.fs->id; /* Validate file object */
                 }
         }
-
         if(res == FR_OK) res = sync_fs(dj.fs);
         LEAVE_FF(dj.fs, res);
 }
