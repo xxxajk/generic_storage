@@ -189,8 +189,20 @@
 / System Configurations
 /----------------------------------------------------------------------------*/
 #if defined(__AVR__) || defined(memcpy_P)
-#include <avr/io.h>
 #include <avr/pgmspace.h>
+#if !defined(ARDUINO_ARCH_SAM)
+#include <avr/io.h>
+#else
+// First, we define missing stuff that we need for demos.
+// And then we fake the rest.
+#if !defined(printf_P)
+#define printf_P(...) printf(__VA_ARGS__)
+#endif
+#if !defined(fprintf_P)
+#define fprintf_P(s, ...) ((s), __VA_ARGS__)
+#endif
+#endif
+
 #define _TABLES_IN_PGMSPACE 1
 #define GWSTR(X) pgm_read_word_near(&X)
 #define GSTR(X) pgm_read_byte_near(&X)
